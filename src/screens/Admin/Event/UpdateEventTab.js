@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import EditForm from '../../../components/Form/EditForm';
+import SeatModal from '../../../components/Admin/SeatModal';
 import axios from 'axios';
-import { Spinner, Toast } from 'flowbite-react';
+import { Spinner, Toast, Modal, Button } from 'flowbite-react';
 import {
 	HiCheck,
 	HiExclamation,
@@ -140,7 +141,7 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 
 					if (result.success) {
 						setTimeout(() => {
-                            setSuccessMessage('Cập nhật sự kiện thành công')
+							setSuccessMessage('Cập nhật sự kiện thành công');
 						}, 2000);
 					}
 
@@ -236,6 +237,13 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 		createTicketType();
 	};
 
+	// Setup seat booking
+	const [openSeatModal, setOpenSeatModal] = useState(false);
+	const board = [
+		['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
+		['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+		//... more arrays
+	];
 	return (
 		<>
 			<section className="px-6 py-4 mt-[-10px]">
@@ -323,7 +331,37 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 																/>
 															) : (
 																<>
-																	{/* <HiPlus className="inline cursor-pointer text-main" /> */}
+																	<HiPlus
+																		onClick={() => setOpenSeatModal(true)}
+																		className="inline cursor-pointer text-main"
+																	/>
+																	<Modal
+																		show={openSeatModal}
+																		size="7xl"
+																		onClose={() => setOpenSeatModal(false)}
+																	>
+																		<Modal.Header>Small modal</Modal.Header>
+																		<Modal.Body>
+																			<div className="space-y-6 p-6">
+																				<div className="mx-auto">
+																					{board.map((row, i) => (
+																						<div className="flex mx-2" key={i}>
+																							{row.map((cell, j) => (
+																								<button key={j}>{cell} </button>
+																							))}
+																						</div>
+																					))}
+																				</div>
+																			</div>
+																		</Modal.Body>
+																		<Modal.Footer>
+																			<Button onClick={() => setOpenModal(false)}>I accept</Button>
+																			<Button color="gray" onClick={() => setOpenModal(false)}>
+																				Decline
+																			</Button>
+																		</Modal.Footer>
+																	</Modal>
+
 																	{!type.is_selling ? (
 																		<HiLockClosed
 																			onClick={() => {

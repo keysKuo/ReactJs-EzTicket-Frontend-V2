@@ -1,12 +1,8 @@
-import { useEffect } from "react";
-import { Header, SideNav } from "../../components/Client";
-import { Link, Outlet } from "react-router-dom";
-
+import { useEffect } from 'react';
+import { Header, SideNav } from '../../components/Client';
+import { Link, Outlet } from 'react-router-dom';
 
 export default function ClientRoot() {
-
-
-
 	return (
 		<>
 			<Header />

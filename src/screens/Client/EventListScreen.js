@@ -1,28 +1,30 @@
 import axios from 'axios';
-import { Pagination } from 'flowbite-react';
+import { Pagination, Spinner } from 'flowbite-react';
 import { useEffect, useState } from 'react';
 import { LuCalendar, LuGrid, LuMapPin, LuSearch } from 'react-icons/lu';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 
 export default function EventListScreen() {
 	const [events, setEvents] = useState([]);
-	const { category_slug } = useParams();
+	const [totalCount, setTotalCount] = useState();
 	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchText, setSearchText] = useState(searchParams.get('search') || '');
+	const [currentPage, setCurrentPage] = useState(1);
+	const { category_slug } = useParams();
 	const [errorMessage, setErrorMessage] = useState('');
-
-	const onPageChange = (page) => setSearchParams(2);
+	const [loading, isLoading] = useState(false);
+	const navigate = useNavigate();
+	const location = useLocation();
 
 	useEffect(() => {
-		// console.log(category_slug);
-		// console.log(searchParams.get('page'));
 		const FetchDataEventsBySlug = async () => {
+			isLoading(true);
 			const options = {
-				url: `${process.env.REACT_APP_API_URL}/api/event/search_by_category?slug=${category_slug}&page=${
-					searchParams.get('page') || 1
-				}`,
+				url: `${process.env.REACT_APP_API_URL}/api/event/search_by_category?slug=${category_slug}&search=${
+					searchText || ''
+				}&page=${currentPage || 1}`,
 				method: 'GET',
 			};
-
 			await axios
 				.request(options)
 				.then((response) => {
@@ -33,18 +35,26 @@ export default function EventListScreen() {
 							setErrorMessage('Không tìm thấy sự kiện tương ứng');
 						}
 						setEvents(result.events);
+						setCurrentPage(Number(searchParams.get('page')) || 1);
+						setTotalCount(result.total || 0);
 					}
-
-					console.log(result);
+					isLoading(false);
 				})
 				.catch((err) => {
 					console.log(err);
 					setErrorMessage('Không tìm thấy sự kiện tương ứng');
 				});
 		};
-
 		FetchDataEventsBySlug();
-	}, []);
+	}, [category_slug, currentPage, searchText]);
+	const onPageChange = (page) => {
+		setCurrentPage(page);
+		navigate(`${location.pathname}?page=${page}&search=${searchText}`);
+	};
+
+	const handleSearchOnClick = () => {
+		navigate(`${location.pathname}?page=${currentPage}&search=${searchText}`);
+	};
 
 	return (
 		<section className="w-full mt-[4.5rem] min-h-screen flex">
@@ -57,12 +67,17 @@ export default function EventListScreen() {
 							<div className="w-full">
 								<div className="w-full border-2 text-black-500 border-black-500 flex items-center relative border-collapse">
 									<input
+										onChange={(e) => setSearchText(e.target.value || '')}
+										onKeyDown={(e) => {
+											if (e.key === 'Enter') handleSearchOnClick();
+										}}
+										value={searchText}
 										className="w-full h-[54px] px-5 text-md outline-none -none rounded"
 										placeholder="Tìm sự kiện, triễn lãm, hoạt động vui chơi ..."
 									/>
-									<span className="text-gray-600 -0 absolute right-5 leading-5 rounded">
+									<button className="text-gray-600 -0 absolute right-5 leading-5 rounded">
 										<LuSearch size={20} />
-									</span>
+									</button>
 								</div>
 							</div>
 						</div>
@@ -71,76 +86,89 @@ export default function EventListScreen() {
 
 				<div className="event-list w-full mt-12">
 					<div className="w-full relative clear-both">
-						<div className="container mx-auto">
-							{events.length !== 0 ? (
-								<>
-									<div className="min-h-[300px] grid desktop:grid-cols-3 tablet:grid-cols-2 gap-8">
-										{events.map((event, index) => {
-											return (
-												<Link to={`/event/${event.slug}`} key={index} className="bg-white text-black-500 ">
-													<div className="flex flex-col">
-														<div className="img-container w-full overflow-hidden object-cover">
-															<img src={event.banner} />
-														</div>
+						{loading ? (
+							<div className="text-center">
+								<Spinner aria-label="Center-aligned spinner example" />
+							</div>
+						) : (
+							<div className="container mx-auto">
+								{events.length !== 0 ? (
+									<>
+										<div className="min-h-[300px] grid desktop:grid-cols-3 tablet:grid-cols-2 gap-8">
+											{events.map((event, index) => {
+												return (
+													<Link
+														to={`/event/${event.slug}`}
+														key={index}
+														className="bg-white text-black-500 "
+													>
+														<div className="flex flex-col">
+															<div className="img-container w-full overflow-hidden object-cover">
+																<img src={event.banner} />
+															</div>
 
-														<div className="body-container p-3">
-															<h1 className="w-full text-lg font-medium mb-3 min-h-14">
-																{event.event_name}
-															</h1>
+															<div className="body-container p-3">
+																<h1 className="w-full text-lg font-medium mb-3 min-h-14">
+																	{event.event_name}
+																</h1>
 
-															<div className="flex items-center justify-between">
-																<div className="flex items-center">
-																	<span className="text-sm text-black-300 pr-1">Từ</span>
-																	<strong className="text-md text-main">
-																		{(event.ticket_types[0]?.price || 0).toLocaleString('vi-vn')}đ
-																	</strong>
+																<div className="flex items-center justify-between">
+																	<div className="flex items-center">
+																		<span className="text-sm text-black-300 pr-1">Từ</span>
+																		<strong className="text-md text-main">
+																			{(event.ticket_types[0]?.price || 0).toLocaleString('vi-vn')}đ
+																		</strong>
+																	</div>
+																	<div className="whitespace-nowrap flex items-center">
+																		<div className="flex items-center gap-2 text-sm">
+																			<LuCalendar color={'#71B190'} />
+																			<span>
+																				{new Date(event.occur_date).toLocaleDateString('vi-vn')}
+																			</span>
+																		</div>
+																	</div>
 																</div>
-																<div className="whitespace-nowrap flex items-center">
-																	<div className="flex items-center gap-2 text-sm">
-																		<LuCalendar color={'#71B190'} />
-																		<span>
-																			{new Date(event.occur_date).toLocaleDateString('vi-vn')}
+
+																<div className="flex items-center justify-between mt-2">
+																	<div className="flex items-center gap-1">
+																		<LuGrid color="71B190" />
+																		<span className="text-sm text-black-300 pr-1">
+																			{event.category.category_name}
 																		</span>
 																	</div>
-																</div>
-															</div>
-
-															<div className="flex items-center justify-between mt-2">
-																<div className="flex items-center gap-1">
-																	<LuGrid color="71B190" />
-																	<span className="text-sm text-black-300 pr-1">
-																		{event.category.category_name}
-																	</span>
-																</div>
-																<div className="whitespace-nowrap flex items-center">
-																	<div className="flex items-center gap-2 text-sm">
-																		<span className="p-1 border border-gray-300">{event.location}</span>
+																	<div className="whitespace-nowrap flex items-center">
+																		<div className="flex items-center gap-2 text-sm">
+																			<span className="p-1 border border-gray-300">
+																				{event.location}
+																			</span>
+																		</div>
 																	</div>
 																</div>
 															</div>
 														</div>
-													</div>
-												</Link>
-											);
-										})}
+													</Link>
+												);
+											})}
+										</div>
+										<div className="flex items-center justify-center mt-20">
+											<Pagination
+												theme={PaginationTheme}
+												previousLabel="Trước"
+												nextLabel="Sau"
+												currentPage={currentPage}
+												totalPages={Math.ceil(totalCount / 10)}
+												onPageChange={onPageChange}
+												showIcons
+											/>
+										</div>
+									</>
+								) : (
+									<div class="w-full h-[50dvh] flex justify-center items-center">
+										<h1>{errorMessage}</h1>
 									</div>
-									<div className="flex items-center justify-center mt-20">
-										<Pagination
-											previousLabel="Trước"
-											nextLabel="Sau"
-											currentPage={searchParams.get('page') || 1}
-											totalPages={50}
-											onPageChange={onPageChange}
-											showIcons
-										/>
-									</div>
-								</>
-							) : (
-								<div class="w-full h-[50dvh] flex justify-center items-center">
-									<h1>{errorMessage}</h1>
-								</div>
-							)}
-						</div>
+								)}
+							</div>
+						)}
 					</div>
 				</div>
 			</div>
