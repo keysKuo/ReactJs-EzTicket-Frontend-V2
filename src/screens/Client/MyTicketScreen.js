@@ -72,10 +72,8 @@ export default function MyTicketScreen() {
 		}
 	};
 
-	
-
 	const handleClickMail = (booking) => {
-		setSelectedBooking(booking)
+		setSelectedBooking(booking);
 		setOpenModal2(true);
 	};
 
@@ -83,30 +81,29 @@ export default function MyTicketScreen() {
 		const ResendTicket = async () => {
 			const options = {
 				url: `${process.env.REACT_APP_API_URL}/api/ticket/resend/${trade_code}/${user._id}`,
-				method: 'GET'
-			}
+				method: 'GET',
+			};
 
-			await axios.request(options)
-				.then(response => {
+			await axios
+				.request(options)
+				.then((response) => {
 					const result = response.data;
 
-					if(result.success) {
-						setSuccessMessage('Vé đã được gửi đến email của bạn.')
+					if (result.success) {
+						setSuccessMessage('Vé đã được gửi đến email của bạn.');
 					}
 
 					console.log(result);
 				})
-				.catch(err => {
+				.catch((err) => {
 					console.log(err);
-				})
+				});
 
 			console.log(options);
-		}
+		};
 		ResendTicket();
+	};
 
-
-	}
- 
 	const handleClickPrint = () => {};
 
 	const [openModal, setOpenModal] = useState(false);
@@ -178,7 +175,7 @@ export default function MyTicketScreen() {
 							/>
 							<div className="flex flex-col gap-1">
 								<span className="text-sm whitespace-nowrap leading-5 w-[80%]">Tài khoản của bạn</span>
-								<span className="text-base whitespace-nowrap leading-5 w-[80%]">Kuo Nhan Dung</span>
+								<span className="text-base whitespace-nowrap leading-5 w-[80%]">{user.fullname}</span>
 							</div>
 						</div>
 
@@ -228,112 +225,107 @@ export default function MyTicketScreen() {
 						<div className="mt-10 relative">
 							<div className="flex flex-col items-center justify-center ">
 								{bookings.length !== 0 ? (
-									<>
-										<div className="w-full">
-											<Table hoverable>
-												<Table.Head>
-													{headcells.map((cell, index) => {
+									<div className="w-full">
+										<Table hoverable>
+											<Table.Head>
+												{headcells.map((cell, index) => {
+													return (
+														<Table.HeadCell className="text-center" key={index}>
+															{cell}
+														</Table.HeadCell>
+													);
+												})}
+
+												<Table.HeadCell className="text-center">
+													<span>Yêu cầu</span>
+												</Table.HeadCell>
+											</Table.Head>
+											<Table.Body className="divide-y text-center">
+												{bookings &&
+													bookings.map((booking, index) => {
 														return (
-															<Table.HeadCell className="text-center" key={index}>
-																{cell}
-															</Table.HeadCell>
+															<Table.Row
+																key={index}
+																className="bg-white dark:border-gray-700 dark:bg-gray-800"
+															>
+																<Table.Cell className="text-xs flex items-center justify-center">
+																	<img
+																		className="cursor-pounter max-w-48"
+																		src={booking.event.banner}
+																	/>
+																</Table.Cell>
+
+																<Table.Cell className="text-xs">{booking.trade_code}</Table.Cell>
+
+																<Table.Cell className="text-xs">
+																	{booking.tickets.map((ticket, idx) => {
+																		return (
+																			<p className="my-2" key={idx}>
+																				{ticket.ticket_type.ticket_name}
+																			</p>
+																		);
+																	})}
+																</Table.Cell>
+
+																<Table.Cell className="text-xs">
+																	{booking.tickets.map((ticket, idx) => {
+																		return (
+																			<p className="my-2" key={idx}>
+																				{ticket.price.toLocaleString('vi-vn')}đ
+																			</p>
+																		);
+																	})}
+																</Table.Cell>
+
+																<Table.Cell className="text-xs text-center">
+																	{booking.tickets.map((ticket, idx) => {
+																		return (
+																			<p className="my-2" key={idx}>
+																				{ticket.qty}
+																			</p>
+																		);
+																	})}
+																</Table.Cell>
+
+																<Table.Cell className="text-xs">
+																	{new Date(booking.createdAt).toLocaleString('vi-vn')}
+																</Table.Cell>
+
+																<Table.Cell>
+																	{booking.status === 'refunded' ? (
+																		<p className="text-main text-xs">Đã hoàn tiền</p>
+																	) : (
+																		<div className="flex flex-row gap-3 justify-between text-xs font-medium hover:underline text-center">
+																			<LuReceipt
+																				size={18}
+																				className="text-emerald-600"
+																				title="Yêu cầu hoàn tiền"
+																				onClick={() => {
+																					handleClickRefund(booking._id, booking.trade_code);
+																				}}
+																			/>
+																			<LuMail
+																				size={18}
+																				className="text-rose-600"
+																				title="Gửi lại vé sự kiện"
+																				onClick={() => {
+																					handleClickMail(booking);
+																				}}
+																			/>
+																			<LuDownload
+																				size={18}
+																				className="text-cyan-500"
+																				title="In vé cứng"
+																			/>
+																		</div>
+																	)}
+																</Table.Cell>
+															</Table.Row>
 														);
 													})}
-
-													<Table.HeadCell className="text-center">
-														<span>Yêu cầu</span>
-													</Table.HeadCell>
-												</Table.Head>
-												<Table.Body className="divide-y text-center">
-													{bookings &&
-														bookings.map((booking, index) => {
-															return (
-																<Table.Row
-																	key={index}
-																	className="bg-white dark:border-gray-700 dark:bg-gray-800"
-																>
-																	<Table.Cell className="text-xs flex items-center justify-center">
-																		<img
-																			className="cursor-pounter max-w-48"
-																			src={booking.event.banner}
-																		/>
-																	</Table.Cell>
-
-																	<Table.Cell className="text-xs">{booking.trade_code}</Table.Cell>
-
-																	<Table.Cell className="text-xs">
-																		{booking.tickets.map((ticket, idx) => {
-																			return (
-																				<p className="my-2" key={idx}>
-																					{ticket.ticket_type.ticket_name}
-																				</p>
-																			);
-																		})}
-																	</Table.Cell>
-
-																	<Table.Cell className="text-xs">
-																		{booking.tickets.map((ticket, idx) => {
-																			return (
-																				<p className="my-2" key={idx}>
-																					{ticket.price.toLocaleString('vi-vn')}đ
-																				</p>
-																			);
-																		})}
-																	</Table.Cell>
-
-																	<Table.Cell className="text-xs text-center">
-																		{booking.tickets.map((ticket, idx) => {
-																			return (
-																				<p className="my-2" key={idx}>
-																					{ticket.qty}
-																				</p>
-																			);
-																		})}
-																	</Table.Cell>
-
-																	<Table.Cell className="text-xs">
-																		{new Date(booking.createdAt).toLocaleString('vi-vn')}
-																	</Table.Cell>
-
-																	<Table.Cell>
-																		{booking.status === 'refunded' ? (
-																			<p className="text-main text-xs">Đã hoàn tiền</p>
-																		) : (
-																			<div
-																				
-																				className="flex flex-row gap-3 justify-between text-xs font-medium hover:underline text-center"
-																			>
-																				<LuReceipt
-																					size={18}
-																					className="text-emerald-600"
-																					title="Yêu cầu hoàn tiền"
-																					onClick={() => {
-																						handleClickRefund(booking._id, booking.trade_code);
-																					}}
-																				/>
-																				<LuMail
-																					size={18}
-																					className="text-rose-600"
-																					title="Gửi lại vé sự kiện"
-																					onClick={() => {
-																						handleClickMail(booking);
-																					}}
-																				/>
-																				<LuDownload
-																					size={18}
-																					className="text-cyan-500"
-																					title="In vé cứng"
-																				/>
-																			</div>
-																		)}
-																	</Table.Cell>
-																</Table.Row>
-															);
-														})}
-												</Table.Body>
-											</Table>
-										</div>
-									</>
+											</Table.Body>
+										</Table>
+									</div>
 								) : (
 									<section className="mt-10">
 										<svg
@@ -496,7 +488,7 @@ export default function MyTicketScreen() {
 							</div>
 						</div>
 
-						<div className='py-5'></div>
+						<div className="py-5"></div>
 					</div>
 				</div>
 			</div>
@@ -558,10 +550,13 @@ export default function MyTicketScreen() {
 								Bạn muốn nhận lại vé thông qua email?
 							</h3>
 							<div className="flex justify-center gap-4">
-								<button onClick={() => {
-									handleSendMail(selectedBooking.trade_code);
-									setOpenModal2(false);
-								}} className="btn bg-main">
+								<button
+									onClick={() => {
+										handleSendMail(selectedBooking.trade_code);
+										setOpenModal2(false);
+									}}
+									className="btn bg-main"
+								>
 									{'Xác nhận'}
 								</button>
 								<button style={{ background: '#314133' }} className="btn" onClick={() => setOpenModal2(false)}>
@@ -591,7 +586,6 @@ export default function MyTicketScreen() {
 					</Toast>
 				</div>
 			</>
-			
 		</section>
 	);
 }

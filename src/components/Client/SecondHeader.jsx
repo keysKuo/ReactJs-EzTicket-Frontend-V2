@@ -73,7 +73,7 @@ export default function SecondHeader() {
 				</div>
 				<div className="flex items-center justify-center h-[100%] mr-10 ml-auto">
 					<Link
-						to="/event/create"
+						to="/business/events"
 						className="flex items-center justify-center w-32 mx-4 
                     bg-slate-700 text-white text-sm
                     h-9 leading-9 min-w-[90px] 
@@ -153,30 +153,6 @@ export default function SecondHeader() {
 				>
 					<div className="flex flex-row items-center h-[100%] w-[100%] ml-10">
 						<SubHeaderCategories pathname={location.pathname} list={categories} />
-						{/* <ul className="flex flex-row items-center justify-start desktop:gap-10 gap-5 text-black px-10">
-							<li
-								className={`desktop:text-sm text-xs font-medium pointer  hover:text-emerald-300 ${
-									location.pathname === '/events/nhac-song' ? 'text-emerald-300' : ''
-								}`}
-							>
-								<Link to="/events/nhac-song">Concert nhạc</Link>
-							</li>
-							<li className="desktop:text-sm text-xs font-medium pointer hover:text-emerald-300">
-								<Link to="/events/san-khau-nghe-thuat">Sân khấu nghệ thuật</Link>
-							</li>
-							<li className="desktop:text-sm text-xs font-medium pointer hover:text-emerald-300">
-								<Link to="/events/khoa-hoc-dien-thuyet">Khoa học - diễn thuyết</Link>
-							</li>
-							<li className="desktop:text-sm text-xs font-medium pointer hover:text-emerald-300">
-								<Link to="/events/du-lich-kham-pha">Du lịch khám phá</Link>
-							</li>
-							<li className="desktop:text-sm text-xs font-medium pointer hover:text-emerald-300">
-								<Link to="/events/the-duc-the-thao">Thể dục thể thao</Link>
-							</li>
-							<li className="desktop:text-sm text-xs font-medium pointer hover:text-emerald-300">
-								<Link to="/events/hoi-nghi-trien-lam">Hội nghị - triễn lãm</Link>
-							</li>
-						</ul> */}
 					</div>
 				</div>
 			</header>

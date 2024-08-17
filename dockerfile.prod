@@ -1,0 +1,12 @@
+FROM node:14.14.0-alpine as builder
+WORKDIR /app
+ENV REACT_APP_API_URL https://sudag.online
+ENV REACT_APP_LOGO_URL /logo.png
+COPY ./package.json ./
+COPY package-lock.json ./
+RUN npm i
+COPY . .
+RUN npm run build
+FROM node:14.14.0-alpine
+COPY --from=builder /app/build /var/lib/frontend
+
