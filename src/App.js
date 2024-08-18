@@ -16,6 +16,7 @@ import {
 	OTPScreen,
 	SuccessScreen,
 	MyTicketScreen,
+	SearchEventScreen,
 } from './screens/Client';
 import { BusinessScreen, AdminScreen, AdminLoginScreen } from './screens/Admin';
 import CheckoutScreen from './screens/Client/CheckoutScreen';
@@ -65,7 +66,8 @@ const router = createBrowserRouter([
 			{ path: '/checkout/success', element: <SuccessScreen /> },
 			{ path: '/user/my_tickets', element: <MyTicketScreen /> },
 			//
-			{ path: '/events/:category_slug', element: <EventListScreen /> }
+			{ path: '/events/:category_slug', element: <EventListScreen /> },
+			{ path: '/events/search', element: <SearchEventScreen /> },
 		],
 	},
 ]);

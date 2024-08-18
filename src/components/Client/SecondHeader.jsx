@@ -46,6 +46,8 @@ export default function SecondHeader() {
 
 	const navigate = useNavigate();
 	const location = useLocation();
+
+	console.log(location.pathname.startsWith('/events'));
 	return (
 		<>
 			<header
@@ -59,18 +61,21 @@ export default function SecondHeader() {
 						<img src={logo_url} className="w-[30%]" />
 					</Link>
 
-					<div className="desktop:flex hidden items-center relative w-[100%]">
-						<LuSearch className="absolute left-1 w-10 text-gray-300" fill="none" />
-
-						<input
-							type="text"
-							className="bg-slate-700 outline-none
+					{!location.pathname.startsWith('/events') && (
+						<div className="desktop:flex hidden items-center relative w-[100%]">
+							<LuSearch className="absolute left-1 w-10 text-gray-300" fill="none" />
+							<input
+								onClick={() => navigate('/events/search')}
+								type="text"
+								className="bg-slate-700 outline-none
                         	focus:outline-none focus:ring-2 hover:ring-1 hover:ring-white focus:ring-amber-200
                        	  text-white text-sm leading-8 h-8 px-12 py-5 rounded border-0 caret-green-300"
-							placeholder="Tìm kiếm"
-						/>
-					</div>
+								placeholder="Tìm kiếm"
+							/>
+						</div>
+					)}
 				</div>
+
 				<div className="flex items-center justify-center h-[100%] mr-10 ml-auto">
 					<Link
 						to="/business/events"

@@ -6,7 +6,7 @@ import RegisterScreen from './RegisterScreen';
 import OTPScreen from './OTPScreen';
 import SuccessScreen from './SuccessScreen';
 import MyTicketScreen from './MyTicketScreen';
-
+import SearchEventScreen from './SearchEventScreen';
 export {
 	MyTicketScreen,
 	HomeScreen,
@@ -16,4 +16,5 @@ export {
 	RegisterScreen,
 	OTPScreen,
 	SuccessScreen,
+	SearchEventScreen,
 };

@@ -4,63 +4,54 @@ import { useEffect, useState } from 'react';
 import { LuCalendar, LuGrid, LuMapPin, LuSearch } from 'react-icons/lu';
 import { Link, useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 
-export default function EventListScreen() {
+export default function SearchEventScreen() {
 	const [events, setEvents] = useState([]);
 	const [totalCount, setTotalCount] = useState();
-	const [searchParams, setSearchParams] = useSearchParams();
-	const [searchText, setSearchText] = useState(searchParams.get('search') || '');
+	const [searchText, setSearchText] = useState('');
 	const [currentPage, setCurrentPage] = useState(1);
-	const { category_slug } = useParams();
 	const [errorMessage, setErrorMessage] = useState('');
-	const [loading, isLoading] = useState(false);
-	const navigate = useNavigate();
-	const location = useLocation();
+	const [loading, setLoading] = useState(false);
 
 	useEffect(() => {
-		const FetchDataEventsBySlug = async () => {
-			isLoading(true);
-			const options = {
-				url: `${process.env.REACT_APP_API_URL}/api/event/search_by_category`,
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				params: {
-					status: 'published',
-					slug: category_slug,
-					search: searchText,
-					page: currentPage,
-				},
-			};
+		var cutoff = new Date();
+		const options = {
+			method: 'GET',
+			url: `${process.env.REACT_APP_API_URL}/api/event/search`,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			params: {
+				occur_date: { $gte: cutoff },
+				limit: 10,
+				page: currentPage,
+				status: 'published',
+				search: searchText,
+			},
+		};
+		const fetchDataEvent = async () => {
+			setLoading(true);
 			await axios
 				.request(options)
 				.then((response) => {
 					const result = response.data;
 
 					if (result.success) {
-						if (result.events.length == 0) {
-							setErrorMessage('Không tìm thấy sự kiện tương ứng');
-						}
 						setEvents(result.events);
-						setCurrentPage(Number(searchParams.get('page')) || 1);
-						setTotalCount(result.total || 0);
 					}
-					isLoading(false);
+					setLoading(false);
+					setTotalCount(result.total);
+					console.log(result);
 				})
 				.catch((err) => {
 					console.log(err);
-					setErrorMessage('Không tìm thấy sự kiện tương ứng');
 				});
 		};
-		FetchDataEventsBySlug();
-	}, [category_slug, currentPage, searchText]);
+
+		fetchDataEvent();
+	}, [currentPage, searchText]);
+
 	const onPageChange = (page) => {
 		setCurrentPage(page);
-		navigate(`${location.pathname}?page=${page}&search=${searchText}`);
-	};
-
-	const handleSearchOnClick = () => {
-		navigate(`${location.pathname}?page=${currentPage}&search=${searchText}`);
 	};
 
 	return (
@@ -74,6 +65,7 @@ export default function EventListScreen() {
 							<div className="w-full">
 								<div className="w-full border-2 text-black-500 border-black-500 flex items-center relative border-collapse">
 									<input
+										autoFocus
 										onChange={(e) => setSearchText(e.target.value || '')}
 										onKeyDown={(e) => {
 											if (e.key === 'Enter') handleSearchOnClick();
@@ -103,12 +95,9 @@ export default function EventListScreen() {
 									<>
 										<div className="min-h-[300px] grid desktop:grid-cols-3 tablet:grid-cols-2 gap-8">
 											{events.map((event, index) => {
+												console.log(event);
 												return (
-													<Link
-														to={`/event/${event.slug}`}
-														key={index}
-														className="bg-white text-black-500 "
-													>
+													<Link to={`/event/${event}`} key={index} className="bg-white text-black-500 ">
 														<div className="flex flex-col">
 															<div className="img-container w-full overflow-hidden object-cover">
 																<img src={event.banner} />
