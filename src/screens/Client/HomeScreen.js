@@ -16,7 +16,7 @@ export default function HomeScreen() {
 				method: 'GET',
 				params: {
 					status: 'published',
-					// occur_date: { $gte: cutoff },
+					occur_date: { $gte: cutoff },
 					limit: 12,
 					sort: 'occur_date',
 				},

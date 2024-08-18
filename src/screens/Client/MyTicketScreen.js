@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Table, Modal, TextInput, Textarea, FileInput, Label, Spinner, Toast } from 'flowbite-react';
+import { Table, Modal, TextInput, Textarea, FileInput, Label, Spinner, Toast, Pagination } from 'flowbite-react';
 import { useEffect, useState } from 'react';
 import { HiCheck, HiExclamation, HiPaperAirplane, HiReceiptRefund } from 'react-icons/hi';
 import {
@@ -19,6 +19,8 @@ import { Link } from 'react-router-dom';
 const headcells = ['Sự kiện', 'Mã giao dịch', 'Danh sách vé', 'Đơn giá', 'Số lượng', 'Ngày đặt vé'];
 
 export default function MyTicketScreen() {
+	const [currentPage, setCurrentPage] = useState(1);
+	const [totalCount, setTotalCount] = useState(0);
 	const [bookings, setBookings] = useState([]);
 	const [selectedBooking, setSelectedBooking] = useState({});
 	const [loading, setLoading] = useState(false);
@@ -37,11 +39,8 @@ export default function MyTicketScreen() {
 	const [successMessage, setSuccessMessage] = useState('');
 
 	const [currentTag, setCurrentTag] = useState('all');
-	var cutoff;
+	var currentDate = new Date();
 	useEffect(() => {
-		var cutoff = new Date();
-		const createdAt =
-			currentTag === 'upcoming' ? { $gte: cutoff } : currentTag === 'finished' ? { $lte: cutoff } : null;
 		setLoading(true);
 		const FetchDataBookings = async () => {
 			const options = {
@@ -49,7 +48,9 @@ export default function MyTicketScreen() {
 				method: 'GET',
 				params: {
 					customer: user._id,
-					createdAt,
+					tag: currentTag,
+					page: currentPage,
+					limit: 10,
 				},
 			};
 
@@ -60,6 +61,7 @@ export default function MyTicketScreen() {
 
 					if (result.success) {
 						setBookings(result.bookings);
+						setTotalCount(result.total);
 					}
 					setLoading(false);
 					console.log(result);
@@ -72,7 +74,7 @@ export default function MyTicketScreen() {
 		};
 
 		FetchDataBookings();
-	}, [currentTag]);
+	}, [currentTag, currentPage]);
 
 	const handleFileChange = (event) => {
 		const files = event.target.files;
@@ -117,6 +119,12 @@ export default function MyTicketScreen() {
 
 	const handleClickPrint = () => {
 		console.log('print');
+	};
+
+	const onPageChange = (page) => {
+		setCurrentPage(page);
+
+		// navigate(`${location.pathname}?page=${page}&search=${searchText}`);
 	};
 
 	const [openModal, setOpenModal] = useState(false);
@@ -329,7 +337,7 @@ export default function MyTicketScreen() {
 																			<p className="text-main text-xs">Đã hoàn tiền</p>
 																		) : (
 																			<div className="flex flex-row gap-3 justify-between text-xs font-medium hover:underline text-center">
-																				{booking.createdAt > cutoff ? (
+																				{new Date(booking.event.occur_date) > currentDate && (
 																					<>
 																						<LuReceipt
 																							size={18}
@@ -356,8 +364,6 @@ export default function MyTicketScreen() {
 																							title="In vé cứng"
 																						/>
 																					</>
-																				) : (
-																					<p className="text-main text-xs">Hoàn thành</p>
 																				)}
 																			</div>
 																		)}
@@ -367,6 +373,17 @@ export default function MyTicketScreen() {
 														})}
 												</Table.Body>
 											</Table>
+											<div className="flex items-center justify-center mt-20">
+												<Pagination
+													theme={PaginationTheme}
+													previousLabel="Trước"
+													nextLabel="Sau"
+													currentPage={currentPage}
+													totalPages={Math.ceil(totalCount / 10)}
+													onPageChange={onPageChange}
+													showIcons
+												/>
+											</div>
 										</div>
 									) : (
 										<section className="mt-10">
@@ -632,3 +649,31 @@ export default function MyTicketScreen() {
 		</section>
 	);
 }
+
+const PaginationTheme = {
+	base: '',
+	layout: {
+		table: {
+			base: 'text-sm text-gray-700 dark:text-gray-400',
+			span: 'font-semibold text-gray-900 dark:text-white',
+		},
+	},
+	pages: {
+		base: 'xs:mt-0 mt-2 inline-flex items-center -space-x-px',
+		showIcon: 'inline-flex',
+		previous: {
+			base: 'ml-0  -gray-300 bg-white py-2 px-3 leading-tight text-gray-500 enabled:hover:bg-gray-100 enabled:hover:text-gray-700 dark:-gray-700 dark:bg-gray-800 dark:text-gray-400 enabled:dark:hover:bg-gray-700 enabled:dark:hover:text-white',
+			icon: 'h-5 w-5',
+		},
+		next: {
+			base: ' -gray-300 bg-white py-2 px-3 leading-tight text-gray-500 enabled:hover:bg-gray-100 enabled:hover:text-gray-700 dark:-gray-700 dark:bg-gray-800 dark:text-gray-400 enabled:dark:hover:bg-gray-700 enabled:dark:hover:text-white',
+			icon: 'h-5 w-5',
+		},
+		selector: {
+			base: 'w-12  -gray-300 bg-white py-2 leading-tight text-gray-500 enabled:hover:bg-gray-100 enabled:hover:text-gray-700 dark:-gray-700 dark:bg-gray-800 dark:text-gray-400 enabled:dark:hover:bg-gray-700 enabled:dark:hover:text-white',
+			active:
+				'bg-main text-white hover:bg-cyan-100 hover:text-cyan-700 dark:-gray-700 dark:bg-gray-700 dark:text-white',
+			disabled: 'opacity-50 cursor-normal',
+		},
+	},
+};
