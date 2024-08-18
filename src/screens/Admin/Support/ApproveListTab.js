@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Checkbox, Table, ToggleSwitch } from 'flowbite-react';
+import { Checkbox, Table, ToggleSwitch, Pagination } from 'flowbite-react';
 import { LuFileEdit, LuTicket, LuTrash } from 'react-icons/lu';
 import { HiDownload, HiPencil, HiStatusOffline, HiStatusOnline, HiTrash } from 'react-icons/hi';
 import UpdateEventTab from '../Event/UpdateEventTab';
@@ -9,10 +9,13 @@ const headcells = ['Banner', 'Tên sự kiện', 'Ngày diễn ra', 'Địa đi�
 export default function ApproveListTab({}) {
 	const [isEditing, setIsEditing] = useState(false);
 	const [eventStates, setEventStates] = useState([]);
-
+	const [totalCount, setTotalCount] = useState(1);
+	const [currentPage, setCurrentPage] = useState(1);
 	const [events, setEvents] = useState([]);
 	const [selectedEvent, setSelectedEvent] = useState('');
-
+	const onPageChange = (page) => {
+		setCurrentPage(page);
+	};
 	useEffect(() => {
 		const options = {
 			method: 'GET',
@@ -20,7 +23,10 @@ export default function ApproveListTab({}) {
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			params: {},
+			params: {
+				limit: 10,
+				page: currentPage,
+			},
 		};
 
 		const fetchDataEvent = async () => {
@@ -31,6 +37,7 @@ export default function ApproveListTab({}) {
 
 					if (result.success) {
 						setEvents(result.events);
+						setTotalCount(result.total);
 					}
 
 					console.log(result);
@@ -41,7 +48,7 @@ export default function ApproveListTab({}) {
 		};
 
 		fetchDataEvent();
-	}, [eventStates]);
+	}, [eventStates, currentPage]);
 
 	useEffect(() => {
 		if (events.length !== 0) {
@@ -163,9 +170,48 @@ export default function ApproveListTab({}) {
 									})}
 							</Table.Body>
 						</Table>
+						<div className="flex items-center justify-center mt-20">
+							<Pagination
+								theme={PaginationTheme}
+								previousLabel="Trước"
+								nextLabel="Sau"
+								currentPage={currentPage}
+								totalPages={Math.ceil(totalCount / 10)}
+								onPageChange={onPageChange}
+								showIcons
+							/>
+						</div>
 					</div>
 				</section>
 			)}
 		</>
 	);
 }
+
+const PaginationTheme = {
+	base: '',
+	layout: {
+		table: {
+			base: 'text-sm text-gray-700 dark:text-gray-400',
+			span: 'font-semibold text-gray-900 dark:text-white',
+		},
+	},
+	pages: {
+		base: 'xs:mt-0 mt-2 inline-flex items-center -space-x-px',
+		showIcon: 'inline-flex',
+		previous: {
+			base: 'ml-0  -gray-300 bg-white py-2 px-3 leading-tight text-gray-500 enabled:hover:bg-gray-100 enabled:hover:text-gray-700 dark:-gray-700 dark:bg-gray-800 dark:text-gray-400 enabled:dark:hover:bg-gray-700 enabled:dark:hover:text-white',
+			icon: 'h-5 w-5',
+		},
+		next: {
+			base: ' -gray-300 bg-white py-2 px-3 leading-tight text-gray-500 enabled:hover:bg-gray-100 enabled:hover:text-gray-700 dark:-gray-700 dark:bg-gray-800 dark:text-gray-400 enabled:dark:hover:bg-gray-700 enabled:dark:hover:text-white',
+			icon: 'h-5 w-5',
+		},
+		selector: {
+			base: 'w-12  -gray-300 bg-white py-2 leading-tight text-gray-500 enabled:hover:bg-gray-100 enabled:hover:text-gray-700 dark:-gray-700 dark:bg-gray-800 dark:text-gray-400 enabled:dark:hover:bg-gray-700 enabled:dark:hover:text-white',
+			active:
+				'bg-main text-white hover:bg-cyan-100 hover:text-cyan-700 dark:-gray-700 dark:bg-gray-700 dark:text-white',
+			disabled: 'opacity-50 cursor-normal',
+		},
+	},
+};

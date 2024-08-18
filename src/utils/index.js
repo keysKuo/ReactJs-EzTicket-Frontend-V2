@@ -1,3 +1,3 @@
-import checkAuth from "./checkAuth";
+import checkAuth from './checkAuth';
 
-export { checkAuth }
+export { checkAuth };

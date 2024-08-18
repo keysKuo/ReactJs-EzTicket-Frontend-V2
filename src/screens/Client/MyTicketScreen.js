@@ -123,8 +123,6 @@ export default function MyTicketScreen() {
 
 	const onPageChange = (page) => {
 		setCurrentPage(page);
-
-		// navigate(`${location.pathname}?page=${page}&search=${searchText}`);
 	};
 
 	const [openModal, setOpenModal] = useState(false);
