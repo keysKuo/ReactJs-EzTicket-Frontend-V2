@@ -131,11 +131,9 @@ export default function ApproveListTab({}) {
 												</Table.Cell>
 
 												<Table.Cell>
-													<div
-														className="flex flex-row gap-2 text-xs font-medium text-cyan-600 hover:underline dark:text-cyan-500"
-													>
-														<a target='_blank' href={`${process.env.REACT_APP_API_URL}/${event.license}`}>
-														<HiDownload size={20} title="Tải xuống giấy phép" />
+													<div className="flex flex-row gap-2 text-xs font-medium text-cyan-600 hover:underline dark:text-cyan-500">
+														<a target="_blank" href={`${process.env.REACT_APP_API_URL}/${event.license}`}>
+															<HiDownload size={20} title="Tải xuống giấy phép" />
 														</a>
 														<HiPencil
 															title="Cập nhật sự kiện"
@@ -145,7 +143,7 @@ export default function ApproveListTab({}) {
 																setSelectedEvent(event._id);
 															}}
 														/>
-														{/* <HiTrash title="Xóa sự kiện" size={20} /> */}
+														<HiTrash title="Xóa sự kiện" size={20} />
 													</div>
 												</Table.Cell>
 

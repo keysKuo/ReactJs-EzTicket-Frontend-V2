@@ -11,7 +11,7 @@ export default function HomeScreen() {
 		const fetchDataEvents = async () => {
 			setLoading(true);
 			const options = {
-				url: `${process.env.REACT_APP_API_URL}/api/event/search`,
+				url: `${process.env.REACT_APP_API_URL}/api/event/search/?status=published`,
 				method: 'GET',
 			};
 			await axios
