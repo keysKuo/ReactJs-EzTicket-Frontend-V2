@@ -10,9 +10,16 @@ export default function HomeScreen() {
 	useEffect(() => {
 		const fetchDataEvents = async () => {
 			setLoading(true);
+			var cutoff = new Date();
 			const options = {
-				url: `${process.env.REACT_APP_API_URL}/api/event/search/?status=published`,
+				url: `${process.env.REACT_APP_API_URL}/api/event/search/`,
 				method: 'GET',
+				params: {
+					status: 'published',
+					// occur_date: { $gte: cutoff },
+					limit: 12,
+					sort: 'occur_date',
+				},
 			};
 			await axios
 				.request(options)
