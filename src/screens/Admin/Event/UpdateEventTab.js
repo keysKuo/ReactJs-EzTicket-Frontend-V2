@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import EditForm from '../../../components/Form/EditForm';
 import SeatModal from '../../../components/Admin/SeatModal';
+import TickGrid from '../../../components/Admin/TicketGrid';
 import axios from 'axios';
 import { Spinner, Toast, Modal, Button } from 'flowbite-react';
 import {
@@ -344,13 +345,7 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 																		<Modal.Body>
 																			<div className="space-y-6 p-6">
 																				<div className="mx-auto">
-																					{board.map((row, i) => (
-																						<div className="flex mx-2" key={i}>
-																							{row.map((cell, j) => (
-																								<button key={j}>{cell} </button>
-																							))}
-																						</div>
-																					))}
+																					<TickGrid />
 																				</div>
 																			</div>
 																		</Modal.Body>
