@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import EditForm from '../../../components/Form/EditForm';
-import SeatModal from '../../../components/Admin/SeatModal';
+import AddArea from '../../../components/Admin/AddArea';
 import TickGrid from '../../../components/Admin/TicketGrid';
 import axios from 'axios';
 import { Spinner, Toast, Modal, Button } from 'flowbite-react';
@@ -15,13 +15,13 @@ import {
 	HiTrash,
 } from 'react-icons/hi';
 import Input from '../../../components/Form/Input';
-
 export default function UpdateEventTab({ event_id, setIsEditing }) {
 	const [errorMessage, setErrorMessage] = useState('');
 	const [successMessage, setSuccessMessage] = useState('');
 
 	// Fetch Event, Categories data
 	const [event, setEvent] = useState(null);
+	const [ticketTypes, setTicketType] = useState(null);
 	const [categories, setCategories] = useState([]);
 	useEffect(() => {
 		const options = {
@@ -37,9 +37,8 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 
 					if (result.success) {
 						setEvent(result.event);
+						setTicketType(result.event.ticket_types);
 					}
-
-					console.log(result);
 				})
 				.catch((err) => {
 					console.log(err);
@@ -71,6 +70,7 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 	useEffect(() => {
 		if (event) {
 			console.log(event);
+			fetchTicketType(event._id);
 			setAddTicketForm({ ...addTicketForm, event: event._id });
 			setFormData({
 				event_name: event.event_name,
@@ -96,6 +96,7 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 	// Submit update
 	const [isSubmiting, setIsSubmiting] = useState(false);
 	const [formData, setFormData] = useState({});
+
 	const handleSubmit = () => {
 		setIsSubmiting(true);
 		var formDataToSend = new FormData();
@@ -145,8 +146,6 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 							setSuccessMessage('Cập nhật sự kiện thành công');
 						}, 2000);
 					}
-
-					console.log(result);
 				})
 				.catch((err) => {
 					console.log(err);
@@ -163,12 +162,20 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 
 	// Add Ticket Type
 	const [isAddingTicket, setIsAddingTicket] = useState(false);
+
 	const [addTicketForm, setAddTicketForm] = useState({
 		ticket_name: '',
 		price: '',
 		n_stock: '',
 		event: '',
+		position: {
+			x: '',
+			y: '',
+			w: '',
+			h: '',
+		},
 	});
+
 	const handleAddTicket = () => {
 		if (!addTicketForm['ticket_name'] || !addTicketForm['price'] || !addTicketForm['n_stock']) {
 			setErrorMessage('Vui lòng điền đầy đủ thông tin vé');
@@ -181,8 +188,6 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 		}
 
 		const createTicketType = async () => {
-			// console.log(addTicketForm);
-
 			const options = {
 				url: `${process.env.REACT_APP_API_URL}/api/ticket_type/create`,
 				method: 'POST',
@@ -228,6 +233,12 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 						ticket_name: '',
 						price: '',
 						n_stock: '',
+						position: {
+							x: '',
+							y: '',
+							w: '',
+							h: '',
+						},
 						event: event._id,
 					});
 
@@ -238,13 +249,133 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 		createTicketType();
 	};
 
+	// Handle area management
+	const [areaLayout, setAreaLayout] = useState([]);
+	// Add area
+	const [isAddingArea, setIsAddingArea] = useState(false);
+
 	// Setup seat booking
 	const [openSeatModal, setOpenSeatModal] = useState(false);
-	const board = [
-		['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
-		['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-		//... more arrays
-	];
+	const [openAddArea, setOpenAddArea] = useState(false);
+
+	const [isLoadingLayout, setIsLoadingLayout] = useState(false);
+
+	const fetchTicketType = async (id) => {
+		setIsLoadingLayout(true);
+		const options = {
+			method: 'GET',
+			url: `${process.env.REACT_APP_API_URL}/api/ticket_type/search/`,
+			headers: {
+				'Content-Type': 'multipart/form-data',
+			},
+			params: {
+				event: id,
+			},
+		};
+		await axios
+			.request(options)
+			.then((response) => {
+				const result = response.data;
+
+				if (result.success) {
+					setTicketType(result.ticket_types);
+				}
+				setIsLoadingLayout(false);
+			})
+			.catch((err) => {
+				console.log(err);
+			});
+	};
+
+	const generateLayout = (ticketTypes) => {
+		const areas = ticketTypes;
+		const layout = [];
+		for (const item of areas) {
+			const position = item.position;
+			layout.push({
+				i: item.ticket_name,
+				x: position.x,
+				y: position.y,
+				w: position.w,
+				h: position.h,
+			});
+		}
+		return layout;
+	};
+
+	function calculateRoomDimensions(chairs) {
+		const sqrt = Math.sqrt(chairs);
+		let width = Math.ceil(sqrt);
+		let height = Math.ceil(sqrt);
+		if (width * height < chairs) {
+			height = Math.ceil(chairs / width);
+		}
+		const factor = 1;
+		width /= factor;
+		height /= factor;
+		return { width, height };
+	}
+
+	const handleOnClickAreaMgmt = async () => {
+		await fetchTicketType(event._id);
+		console.log(ticketTypes);
+		const layout = generateLayout(ticketTypes);
+		setAreaLayout(layout);
+		setOpenSeatModal(true);
+	};
+
+	const [updateLayout, setUpdateLayout] = useState();
+
+	const updateTicketType = async (id, data) => {
+		const options = {
+			method: 'PUT',
+			url: `${process.env.REACT_APP_API_URL}/api/ticket_type/update/${id}`,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify({ position: data }),
+		};
+
+		await axios
+			.request(options)
+			.then((response) => {
+				const result = response.data;
+				console.log(result);
+				if (result.success) {
+					setSuccessMessage('Cập nhật sự kiện thành công');
+				}
+			})
+			.catch((err) => {
+				console.log(err);
+			});
+	};
+
+	const handleSaveLayout = async () => {
+		try {
+			event.ticket_types.map(async (item, index) => {
+				const position = {
+					x: updateLayout[index].x,
+					y: updateLayout[index].y,
+					h: updateLayout[index].h,
+					w: updateLayout[index].w,
+				};
+				await updateTicketType(item._id, position);
+			});
+		} catch (error) {
+			console.log(error);
+		} finally {
+			await fetchTicketType(event._id);
+			const layout = generateLayout(ticketTypes);
+			setAreaLayout(layout);
+		}
+
+		// setOpenSeatModal(false);
+	};
+
+	const getLayout = (layout) => {
+		setUpdateLayout(layout);
+	};
+
 	return (
 		<>
 			<section className="px-6 py-4 mt-[-10px]">
@@ -269,7 +400,7 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 							onClick={() => {
 								handleSubmit();
 							}}
-							className="text-sm bg-main min-w-32 px-4 py-1"
+							className="text-sm 	 min-w-32 px-4 py-1"
 						>
 							{isSubmiting ? <Spinner color="success" aria-label="Success spinner example" /> : 'Lưu'}
 						</button>
@@ -314,88 +445,70 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 												</th>
 											</tr>
 											{event.ticket_types.map((type, idx) => {
-												return (
-													<tr key={idx} className={`text-center ${type.is_delete && 'line-through'}`}>
-														<td>{type.ticket_name}</td>
-														<td>{type.price.toLocaleString('vi-vn')}đ</td>
-														<td>{type.n_sold}</td>
-														<td>{type.n_stock}</td>
-														<td className="text-sm space-x-1">
-															{type.is_delete ? (
-																<HiOutlineRefresh
-																	className="inline cursor-pointer text-blue-400"
-																	onClick={() => {
-																		let updatedTypes = [...event['ticket_types']];
-																		updatedTypes[idx].is_delete = false;
-																		updateEvent('ticket_types', updatedTypes);
-																	}}
-																/>
-															) : (
-																<>
-																	<HiPlus
-																		onClick={() => setOpenSeatModal(true)}
-																		className="inline cursor-pointer text-main"
-																	/>
-																	<Modal
-																		show={openSeatModal}
-																		size="7xl"
-																		onClose={() => setOpenSeatModal(false)}
-																	>
-																		<Modal.Header>Small modal</Modal.Header>
-																		<Modal.Body>
-																			<div className="space-y-6 p-6">
-																				<div className="mx-auto">
-																					<TickGrid />
-																				</div>
-																			</div>
-																		</Modal.Body>
-																		<Modal.Footer>
-																			<Button onClick={() => setOpenModal(false)}>I accept</Button>
-																			<Button color="gray" onClick={() => setOpenModal(false)}>
-																				Decline
-																			</Button>
-																		</Modal.Footer>
-																	</Modal>
-
-																	{!type.is_selling ? (
-																		<HiLockClosed
-																			onClick={() => {
-																				let updatedTypes = [...event['ticket_types']];
-																				updatedTypes[idx].is_selling = true;
-																				updateEvent('ticket_types', updatedTypes);
-																			}}
-																			className="inline cursor-pointer text-red-500"
-																		/>
-																	) : (
-																		<HiLockOpen
-																			onClick={() => {
-																				let updatedTypes = [...event['ticket_types']];
-																				updatedTypes[idx].is_selling = false;
-																				updateEvent('ticket_types', updatedTypes);
-																			}}
-																			className="inline cursor-pointer text-emerald-300"
-																		/>
-																	)}
-																	<HiTrash
+												if (!type.is_area)
+													return (
+														<tr key={idx} className={`text-center ${type.is_delete && 'line-through'}`}>
+															<td>{type.ticket_name}</td>
+															<td>{type.price.toLocaleString('vi-vn')}đ</td>
+															<td>{type.n_sold}</td>
+															<td>{type.n_stock}</td>
+															<td className="text-sm space-x-1">
+																{type.is_delete ? (
+																	<HiOutlineRefresh
+																		className="inline cursor-pointer text-blue-400"
 																		onClick={() => {
-																			if (type.n_sold !== 0) {
-																				setErrorMessage('Vé bán rồi không thể xóa');
-																				return;
-																			}
 																			let updatedTypes = [...event['ticket_types']];
-																			updatedTypes[idx].is_delete = true;
+																			updatedTypes[idx].is_delete = false;
 																			updateEvent('ticket_types', updatedTypes);
 																		}}
-																		className="inline cursor-pointer text-blue-400"
 																	/>
-																</>
-															)}
-														</td>
-													</tr>
-												);
+																) : (
+																	<>
+																		<HiPlus
+																			onClick={() => setOpenSeatModal(true)}
+																			className="inline cursor-pointer text-main"
+																		/>
+
+																		{!type.is_selling ? (
+																			<HiLockClosed
+																				onClick={() => {
+																					let updatedTypes = [...event['ticket_types']];
+																					updatedTypes[idx].is_selling = true;
+																					updateEvent('ticket_types', updatedTypes);
+																				}}
+																				className="inline cursor-pointer text-red-500"
+																			/>
+																		) : (
+																			<HiLockOpen
+																				onClick={() => {
+																					let updatedTypes = [...event['ticket_types']];
+																					updatedTypes[idx].is_selling = false;
+																					updateEvent('ticket_types', updatedTypes);
+																				}}
+																				className="inline cursor-pointer text-emerald-300"
+																			/>
+																		)}
+																		<HiTrash
+																			onClick={() => {
+																				if (type.n_sold !== 0) {
+																					setErrorMessage('Vé bán rồi không thể xóa');
+																					return;
+																				}
+																				let updatedTypes = [...event['ticket_types']];
+																				updatedTypes[idx].is_delete = true;
+																				updateEvent('ticket_types', updatedTypes);
+																			}}
+																			className="inline cursor-pointer text-blue-400"
+																		/>
+																	</>
+																)}
+															</td>
+														</tr>
+													);
 											})}
 										</table>
 									</div>
+
 									<div className={`${isAddingTicket ? 'grid' : 'hidden'} grid-cols-4 gap-5 p-4`}>
 										<div className="col-span-2">
 											<div className="relative bg-gray-200 rounded">
@@ -436,6 +549,12 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 														setAddTicketForm({
 															...addTicketForm,
 															n_stock: parseInt(e.target.value),
+															position: {
+																x: 0,
+																y: 0,
+																w: calculateRoomDimensions(parseInt(e.target.value)).width,
+																h: calculateRoomDimensions(parseInt(e.target.value)).height,
+															},
 														});
 													}}
 													value={addTicketForm['n_stock']}
@@ -450,6 +569,147 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 											</button>
 										</div>
 									</div>
+								</div>
+
+								<div className="w-full bg-gray-50 rounded border mt-8 border-gray-200">
+									<div className="py-4 px-6 flex flex-row items-center justify-between">
+										<label className="text-sm font-medium">Danh sách khu vực</label>
+										<p
+											onClick={() => {
+												setIsAddingArea((prev) => (prev = !prev));
+											}}
+										>
+											{isAddingArea ? (
+												<HiMinus className="cursor-pointer" />
+											) : (
+												<HiPlus className="cursor-pointer" />
+											)}
+										</p>
+									</div>
+
+									<div className="">
+										<table className="text-xs leading-10 w-full bg-gray-100">
+											<tr className="text-center">
+												<th>Tên</th>
+
+												<th>
+													<div className="px-2"></div>
+												</th>
+											</tr>
+											{event.ticket_types.map((type, idx) => {
+												if (type.is_area)
+													return (
+														<tr key={idx} className={`text-center ${type.is_delete && 'line-through'}`}>
+															<td>{type.ticket_name}</td>
+															<td className="text-sm space-x-1">
+																<HiTrash
+																	onClick={() => {
+																		let updatedTypes = [...event['ticket_types']];
+																		updatedTypes[idx].is_delete = true;
+																		updateEvent('ticket_types', updatedTypes);
+																	}}
+																	className="inline cursor-pointer text-blue-400"
+																/>
+															</td>
+														</tr>
+													);
+											})}
+										</table>
+									</div>
+
+									<Modal show={openSeatModal} size="7xl" onClose={() => setOpenSeatModal(false)}>
+										<Modal.Header>Bố trí khu vực vé</Modal.Header>
+										<Modal.Body>
+											{isLoadingLayout ? (
+												<div className="text-center">
+													<Spinner aria-label="Center-aligned spinner example" />
+												</div>
+											) : (
+												<div className="space-y-6 p-6">
+													<div className="mx-auto bg-gray-100">
+														<TickGrid getLayout={getLayout} areaLayout={areaLayout} />
+													</div>
+												</div>
+											)}
+											<AddArea openAddArea={openAddArea} setOpenAddArea={() => setOpenAddArea()} />
+										</Modal.Body>
+										<Modal.Footer>
+											<Button className="bg-main" onClick={handleSaveLayout}>
+												Lưu
+											</Button>
+											<Button color="gray" onClick={() => setOpenSeatModal(false)}>
+												Hủy bỏ
+											</Button>
+										</Modal.Footer>
+									</Modal>
+
+									<div className={`${isAddingArea ? 'grid' : 'hidden'} grid-cols-4 gap-5 p-4`}>
+										<div className="col-span-2">
+											<div className="relative bg-gray-200 rounded">
+												<Input
+													placeHolder="Tên khu vực"
+													onChange={(e) => {
+														setAddTicketForm({
+															...addTicketForm,
+															ticket_name: e.target.value,
+															is_area: true,
+															price: 1,
+															n_stock: 1,
+														});
+													}}
+													value={addTicketForm['ticket_name']}
+													type="text"
+												/>
+											</div>
+										</div>
+										<div className="col-span-2">
+											<div className="relative bg-gray-200 rounded">
+												<Input
+													placeHolder="Chiều dài"
+													onChange={(e) => {
+														setAddTicketForm({
+															...addTicketForm,
+															position: {
+																...addTicketForm.position,
+																h: parseInt(e.target.value),
+															},
+														});
+													}}
+													value={addTicketForm['position'].h}
+													type="text"
+												/>
+											</div>
+										</div>
+										<div className="col-span-2">
+											<div className="relative bg-gray-200 rounded">
+												<Input
+													placeHolder="Chiều rộng"
+													onChange={(e) => {
+														setAddTicketForm({
+															...addTicketForm,
+															position: {
+																...addTicketForm.position,
+																w: parseInt(e.target.value),
+															},
+														});
+													}}
+													value={addTicketForm['position'].w}
+													type="text"
+												/>
+											</div>
+										</div>
+										<div className="col-span-2 text-center">
+											<button onClick={handleAddTicket} className="btn">
+												Tạo khu vực
+											</button>
+										</div>
+									</div>
+								</div>
+
+								<div className="w-full my-5">
+									<Button onClick={handleOnClickAreaMgmt} className="bg-main">
+										Bố trí khu vực
+									</Button>
 								</div>
 							</div>
 

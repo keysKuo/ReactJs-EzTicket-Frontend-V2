@@ -54,6 +54,7 @@ export default function EventListScreen() {
 		};
 		FetchDataEventsBySlug();
 	}, [category_slug, currentPage, searchText]);
+	
 	const onPageChange = (page) => {
 		setCurrentPage(page);
 		navigate(`${location.pathname}?page=${page}&search=${searchText}`);
