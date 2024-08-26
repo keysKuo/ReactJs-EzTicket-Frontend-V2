@@ -5,12 +5,10 @@ import 'react-resizable/css/styles.css';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 const TickGrid = ({ areaLayout, getLayout }) => {
-	// const layout = props.layout;
-
 	const generateDOM = useMemo(() => {
 		return areaLayout.map((item) => {
 			return (
-				<div className="text-white bg-main cursor-pointer" key={item.i}>
+				<div className="text-white bg-main cursor-pointe text-center" key={item.i}>
 					{item.i}
 				</div>
 			);
