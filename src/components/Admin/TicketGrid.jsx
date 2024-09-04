@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import GridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 const TickGrid = ({ areaLayout, getLayout }) => {
 	const generateDOM = useMemo(() => {

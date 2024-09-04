@@ -7,6 +7,7 @@ import { Checkbox, Table, Pagination } from 'flowbite-react';
 import { LuFileEdit, LuTicket, LuTrash } from 'react-icons/lu';
 import { HiPencil, HiStatusOffline, HiStatusOnline, HiTrash } from 'react-icons/hi';
 import SkeletonEvent from '../../../components/Admin/SkeletonEvent';
+import { useNavigate } from 'react-router-dom';
 
 export default function EventListTab({}) {
 	const [isEditing, setIsEditing] = useState(false);
@@ -60,6 +61,11 @@ export default function EventListTab({}) {
 
 		fetchDataEvent();
 	}, [currentPage]);
+
+	const navigate = useNavigate();
+	const handleOnEditEvent = (event_id) => {
+		navigate(`/business/events/${event_id}`);
+	};
 
 	return (
 		<>
@@ -133,11 +139,13 @@ export default function EventListTab({}) {
 																	<HiStatusOnline size={20} title="Công bố" />
 																)}
 																<HiPencil
+																	className="cursor-pointer"
 																	title="Cập nhật sự kiện"
 																	size={20}
 																	onClick={() => {
 																		setIsEditing(true);
 																		setSelectedEvent(event._id);
+																		// handleOnEditEvent(event._id);
 																	}}
 																/>
 																<HiTrash title="Xóa sự kiện" size={20} />

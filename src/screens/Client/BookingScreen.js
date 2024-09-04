@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { Banner } from '../../components/Client';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import TicketList from '../../components/Client/TicketList';
+import AreaGraph from '../../components/Client/AreaGraph';
 import CustomerInfo from '../../components/Client/CustomerInfo';
 import { BiCreditCard, BiLogoPaypal, BiLogoAmazon } from 'react-icons/bi';
 import axios from 'axios';
-import { Toast, Spinner } from 'flowbite-react';
+import { Toast, Spinner, Button, Modal, ListGroup } from 'flowbite-react';
 import { HiExclamation } from 'react-icons/hi';
 import { checkAuth } from '../../utils';
 
@@ -23,7 +24,7 @@ export default function BookingScreen() {
 
 		checkAuthAsync();
 	}, []);
-
+	const [openModal, setOpenModal] = useState(false);
 	const [user, setUser] = useState(() => {
 		const userJson = localStorage.getItem('user');
 		return userJson ? JSON.parse(userJson) : null;
@@ -127,83 +128,110 @@ export default function BookingScreen() {
 					<div className="booking-container w-[65%] mx-auto">
 						<div className="grid grid-cols-6 gap-4 my-5">
 							{/* Stage 1 */}
-							<>
-								<div className="desktop:col-span-4 laptop:col-span-3 col-span-6 bg-zinc-800 p-4 self-start">
-									<div className="flex flex-col gap-4">
-										<TicketList
-											time={`${event.time} ${new Date(event.occur_date).toLocaleDateString('vi-vn')}`}
-											ticket_types={event.ticket_types}
-											qty={true}
-											data={formData}
-											setData={setFormData}
-										/>
-										<div className="w-[100%]">
-											<div className="border-b border-emerald-300 ">
-												<div className="text-md font-medium text-emerald-300 py-2">
-													Phương thức thanh toán
-												</div>
-											</div>
-											<div classNameZ="py-2"></div>
-											<div className="grid grid-cols-3 gap-5 p-4">
-												<div className="col-span-1">
-													<div
-														className={`rounded-md flex flex-col items-center justify-center w-full
+							<div className="desktop:col-span-4 laptop:col-span-3 col-span-6 bg-zinc-800 p-4 self-start">
+								<div className="flex flex-col gap-4">
+									<table className="table w-[100%]">
+										<tbody>
+											<tr className="table-row border-b border-emerald-300 ">
+												<td className="text-md font-medium text-emerald-300 py-2">Thông tin vé</td>
+
+												<td colSpan={5} className="text-sm py-2 text-right text-gray-300">
+													{event.time}
+												</td>
+											</tr>
+											<div className="py-2"></div>
+											<TicketList
+												ticket_types={event.ticket_types}
+												qty={true}
+												data={formData}
+												is_seat_allocation={event.is_seat_allocation}
+												setData={setFormData}
+											/>
+											{event.is_seat_allocation && (
+												<>
+													<Button className="bg-main" onClick={() => setOpenModal(true)}>
+														Chọn vé
+													</Button>
+													<Modal size="7xl" show={openModal} onClose={() => setOpenModal(false)}>
+														<Modal.Header>Chọn khu vực</Modal.Header>
+														<Modal.Body>
+															<AreaGraph
+																setData={setFormData}
+																data={formData}
+																ticketTypes={event.ticket_types}
+															/>
+														</Modal.Body>
+														<Modal.Footer>
+															<Button color="gray" onClick={() => setOpenModal(false)}>
+																Đóng
+															</Button>
+														</Modal.Footer>
+													</Modal>
+												</>
+											)}
+										</tbody>
+									</table>
+
+									<div className="w-[100%]">
+										<div className="border-b border-emerald-300 ">
+											<div className="text-md font-medium text-emerald-300 py-2">Phương thức thanh toán</div>
+										</div>
+										<div className="py-2"></div>
+										<div className="grid grid-cols-3 gap-5 p-4">
+											<div className="col-span-1">
+												<button
+													className={`rounded-md flex flex-col items-center justify-center w-full
                                                             border-2 border-${
 																					paymentActive === 'stripe' ? 'emerald' : 'slate'
 																				}-300 py-6 gap-2
                                                             hover:border-emerald-300 hover:opacity-90 cursor-pointer`}
-														onClick={() => {
-															setPaymentActive('stripe');
-															setFormData({ ...formData, payment_type: 'stripe' });
-														}}
-													>
-														<BiCreditCard size={40} />
-														<p className="desktop:block hidden text-sm font-medium">
-															Thanh toán với thẻ Visa
-														</p>
-													</div>
-												</div>
-												<div className="col-span-1">
-													<div
-														className={`rounded-md flex flex-col items-center justify-center w-full 
+													onClick={() => {
+														setPaymentActive('stripe');
+														setFormData({ ...formData, payment_type: 'stripe' });
+													}}
+												>
+													<BiCreditCard size={40} />
+													<p className="desktop:block hidden text-sm font-medium">
+														Thanh toán với thẻ Visa
+													</p>
+												</button>
+											</div>
+											<div className="col-span-1">
+												<button
+													className={`rounded-md flex flex-col items-center justify-center w-full 
                                                             border-2 border-${
 																					paymentActive === 'paypal' ? 'emerald' : 'slate'
 																				}-300 py-6 gap-2
                                                             hover:border-emerald-300 hover:opacity-90 cursor-pointer `}
-														onClick={() => {
-															setPaymentActive('paypal');
-															setFormData({ ...formData, payment_type: 'paypal' });
-														}}
-													>
-														<BiLogoPaypal size={40} />
-														<p className="desktop:block hidden text-sm font-medium">
-															Thanh toán với Paypal
-														</p>
-													</div>
-												</div>
-												<div className="col-span-1">
-													<div
-														className={`rounded-md flex flex-col items-center justify-center w-full 
+													onClick={() => {
+														setPaymentActive('paypal');
+														setFormData({ ...formData, payment_type: 'paypal' });
+													}}
+												>
+													<BiLogoPaypal size={40} />
+													<p className="desktop:block hidden text-sm font-medium">Thanh toán với Paypal</p>
+												</button>
+											</div>
+											<div className="col-span-1">
+												<button
+													className={`rounded-md flex flex-col items-center justify-center w-full 
                                                             border-2 border-${
 																					paymentActive === 'amazon' ? 'emerald' : 'slate'
 																				}-300 py-6 gap-2
                                                             hover:border-emerald-300 hover:opacity-90 cursor-pointer `}
-														onClick={() => {
-															setPaymentActive('amazon');
-															setFormData({ ...formData, payment_type: 'amazon' });
-														}}
-													>
-														<BiLogoAmazon size={40} />
-														<p className="desktop:block hidden text-sm font-medium">
-															Thanh toán với Amazon
-														</p>
-													</div>
-												</div>
+													onClick={() => {
+														setPaymentActive('amazon');
+														setFormData({ ...formData, payment_type: 'amazon' });
+													}}
+												>
+													<BiLogoAmazon size={40} />
+													<p className="desktop:block hidden text-sm font-medium">Thanh toán với Amazon</p>
+												</button>
 											</div>
 										</div>
 									</div>
 								</div>
-							</>
+							</div>
 
 							<div className="relative desktop:col-span-2 laptop:col-span-3 col-span-6 w-[100%]">
 								<div className="w-[100%] px-4 py-4 bg-zinc-800">
@@ -222,20 +250,18 @@ export default function BookingScreen() {
 											<>
 												{formData.items.map((tp, index) => {
 													return (
-														<>
-															<table key={index} className="table w-[100%]">
-																<tbody>
-																	<tr className="table-row">
-																		<td className="text-sm font-base p-1">
-																			{tp.ticket_name} <br /> {tp.price.toLocaleString('vi-vn')}đ
-																		</td>
-																		<td className="text-sm text-right">
-																			{tp.qty} <br /> {(tp.price * tp.qty).toLocaleString('vi-vn')}đ
-																		</td>
-																	</tr>
-																</tbody>
-															</table>
-														</>
+														<table aria-hidden="true" key={index} className="table w-[100%]">
+															<tbody>
+																<tr className="table-row">
+																	<td className="text-sm font-base p-1">
+																		{tp.ticket_name} <br /> {tp.price.toLocaleString('vi-vn')}đ
+																	</td>
+																	<td className="text-sm text-right">
+																		{tp.qty} <br /> {(tp.price * tp.qty).toLocaleString('vi-vn')}đ
+																	</td>
+																</tr>
+															</tbody>
+														</table>
 													);
 												})}
 											</>
@@ -263,7 +289,7 @@ export default function BookingScreen() {
 							</div>
 						</div>
 					</div>
-					<div class="py-3"></div>
+					<div className="py-3"></div>
 				</section>
 			)}
 

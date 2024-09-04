@@ -15,7 +15,9 @@ import {
 	HiTrash,
 } from 'react-icons/hi';
 import Input from '../../../components/Form/Input';
+import { toast } from 'react-toastify';
 export default function UpdateEventTab({ event_id, setIsEditing }) {
+	const notify = () => toast('Wow so easy !');
 	const [errorMessage, setErrorMessage] = useState('');
 	const [successMessage, setSuccessMessage] = useState('');
 
@@ -441,7 +443,7 @@ export default function UpdateEventTab({ event_id, setIsEditing }) {
 							onClick={() => {
 								handleSubmit();
 							}}
-							className="text-sm 	 min-w-32 px-4 py-1"
+							className="text-sm bg-main min-w-32 px-4 py-1"
 						>
 							{isSubmiting ? <Spinner color="success" aria-label="Success spinner example" /> : 'Lưu'}
 						</button>

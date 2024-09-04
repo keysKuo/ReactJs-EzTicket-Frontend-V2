@@ -69,8 +69,6 @@ export default function MyTicketScreen() {
 				.catch((err) => {
 					console.log(err);
 				});
-
-			// console.log(options);
 		};
 
 		FetchDataBookings();

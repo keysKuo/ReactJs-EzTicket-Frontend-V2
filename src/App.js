@@ -6,7 +6,7 @@ import SecondRoot from './screens/Layouts/SecondRoot';
 import AdminRoot from './screens/Layouts/AdminRoot';
 import BaseRoot from './screens/Layouts/BaseRoot';
 import BusinessRoot from './screens/Layouts/BusinessRoot';
-
+import 'react-toastify/dist/ReactToastify.css';
 import {
 	HomeScreen,
 	EventDetailScreen,
@@ -21,7 +21,8 @@ import {
 import { BusinessScreen, AdminScreen, AdminLoginScreen } from './screens/Admin';
 import CheckoutScreen from './screens/Client/CheckoutScreen';
 import EventListScreen from './screens/Client/EventListScreen';
-
+import EditEvent from './screens/Admin/Event/EditEvent';
+import { ToastContainer } from 'react-toastify';
 const router = createBrowserRouter([
 	{
 		path: '/business',
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
 			{ path: '/business', element: <BusinessScreen page={'Dashboard'} /> },
 			{ path: '/business/info', element: <BusinessScreen page={'Tổ chức'} /> },
 			{ path: '/business/events', element: <BusinessScreen page={'Sự kiện'} /> },
+			{
+				path: '/business/events/:eventId',
+				element: <EditEvent />,
+			},
 			{ path: '/business/ticket', element: <BusinessScreen page={'Vé'} /> },
 		],
 	},
@@ -73,7 +78,12 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-	return <RouterProvider router={router} />;
+	return (
+		<>
+			<ToastContainer />
+			<RouterProvider router={router} />;
+		</>
+	);
 }
 
 export default App;
