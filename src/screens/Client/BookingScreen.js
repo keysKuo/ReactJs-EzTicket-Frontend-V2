@@ -9,6 +9,7 @@ import axios from 'axios';
 import { Toast, Spinner, Button, Modal, ListGroup } from 'flowbite-react';
 import { HiExclamation } from 'react-icons/hi';
 import { checkAuth } from '../../utils';
+import SeatGrid from '../../components/Client/SeatGrid';
 
 export default function BookingScreen() {
 	const navigate = useNavigate();
@@ -25,6 +26,8 @@ export default function BookingScreen() {
 		checkAuthAsync();
 	}, []);
 	const [openModal, setOpenModal] = useState(false);
+	const [openSeatModal, setOpenSeatModal] = useState(false);
+	const [ticketMap, setTicketMap] = useState([]);
 	const [user, setUser] = useState(() => {
 		const userJson = localStorage.getItem('user');
 		return userJson ? JSON.parse(userJson) : null;
@@ -42,6 +45,22 @@ export default function BookingScreen() {
 
 	const { event_slug } = useParams();
 	const [event, setEvent] = useState(null);
+
+	const [areas, setAreas] = useState([]);
+
+	const fetchArea = async (eventId) => {
+		await axios
+			.get(`${process.env.REACT_APP_API_URL}/api/area/event/${eventId}`)
+			.then((response) => {
+				const result = response.data;
+				if (result.success) {
+					setAreas(result.areas);
+				}
+			})
+			.catch((err) => {
+				console.log(err);
+			});
+	};
 
 	useEffect(() => {
 		if (!user) {
@@ -63,6 +82,7 @@ export default function BookingScreen() {
 
 					if (result.success) {
 						console.log(result.event);
+						fetchArea(result.event._id);
 						setEvent({ ...result.event });
 					}
 
@@ -119,6 +139,11 @@ export default function BookingScreen() {
 		createBooking();
 	};
 
+	const handleOnClickTicket = async (ticketMap) => {
+		setTicketMap(ticketMap);
+		setOpenSeatModal(true);
+	};
+
 	return (
 		<>
 			{event && (
@@ -136,7 +161,7 @@ export default function BookingScreen() {
 												<td className="text-md font-medium text-emerald-300 py-2">Thông tin vé</td>
 
 												<td colSpan={5} className="text-sm py-2 text-right text-gray-300">
-													{event.time}
+													{event.start_time}-{event.end_time}
 												</td>
 											</tr>
 											<div className="py-2"></div>
@@ -146,31 +171,41 @@ export default function BookingScreen() {
 												data={formData}
 												is_seat_allocation={event.is_seat_allocation}
 												setData={setFormData}
+												handleOnclick={handleOnClickTicket}
 											/>
-											{event.is_seat_allocation && (
-												<>
-													<Button className="bg-main" onClick={() => setOpenModal(true)}>
-														Chọn vé
-													</Button>
-													<Modal size="7xl" show={openModal} onClose={() => setOpenModal(false)}>
-														<Modal.Header>Chọn khu vực</Modal.Header>
-														<Modal.Body>
-															<AreaGraph
-																setData={setFormData}
-																data={formData}
-																ticketTypes={event.ticket_types}
-															/>
-														</Modal.Body>
-														<Modal.Footer>
-															<Button color="gray" onClick={() => setOpenModal(false)}>
-																Đóng
-															</Button>
-														</Modal.Footer>
-													</Modal>
-												</>
-											)}
 										</tbody>
 									</table>
+									{event.is_seat_allocation && (
+										<>
+											<Button className="bg-main" onClick={() => setOpenModal(true)}>
+												Sơ đồ vé
+											</Button>
+
+											<Modal size="7xl" show={openModal} onClose={() => setOpenModal(false)}>
+												<Modal.Header>Sơ đồ vé</Modal.Header>
+												<Modal.Body>
+													<AreaGraph areas={areas} ticketTypes={event.ticket_types} />
+												</Modal.Body>
+												<Modal.Footer>
+													<Button color="gray" onClick={() => setOpenModal(false)}>
+														Đóng
+													</Button>
+												</Modal.Footer>
+											</Modal>
+
+											<Modal size="7xl" show={openSeatModal} onClose={() => setOpenSeatModal(false)}>
+												<Modal.Header>Sơ đồ chỗ ngồi</Modal.Header>
+												<Modal.Body>
+													<SeatGrid ticketMap={ticketMap} />
+												</Modal.Body>
+												<Modal.Footer>
+													<Button color="gray" onClick={() => setOpenModal(false)}>
+														Đóng
+													</Button>
+												</Modal.Footer>
+											</Modal>
+										</>
+									)}
 
 									<div className="w-[100%]">
 										<div className="border-b border-emerald-300 ">
