@@ -13,15 +13,26 @@ import {
 	HiOutlineRefresh,
 	HiPlus,
 	HiTrash,
+	HiOutlineTemplate,
+	HiPencilAlt,
 } from 'react-icons/hi';
+
+import TicketAllocationGrid from '../../../components/Admin/TicketAllocationGrid';
+import SeatAllocationGrid from '../../../components/Admin/SeatAllocationGrid';
 const EditEvent = () => {
 	const { eventId } = useParams();
 
-	const [event, setEvent] = useState({});
+	const [event, setEvent] = useState();
+	const [layout, setLayout] = useState([]);
 	const [isLoadingEvent, setIsLoadingEvent] = useState(false);
 	const [isLoadingArea, setIsLoadingArea] = useState(false);
 	const [isLoadingType, setIsLoadingType] = useState(true);
 	const [reload, setReload] = useState(false);
+
+	const [ticketMap, setTicketMap] = useState({
+		layout: [],
+		id: '',
+	});
 
 	const [formData, setFormData] = useState({
 		event_name: '',
@@ -38,6 +49,17 @@ const EditEvent = () => {
 	});
 	const [categories, setCategories] = useState([]);
 	const [areas, setAreas] = useState([]);
+	const [areaForm, setAreaForm] = useState({
+		event: eventId,
+		area_name: '',
+		is_static: false,
+		position: {
+			x: '0',
+			y: '0',
+			w: '',
+			h: '',
+		},
+	});
 	const [ticketTypes, setTicketTypes] = useState([]);
 
 	const [ticketTypeForm, setTicketTypeForm] = useState({
@@ -48,14 +70,16 @@ const EditEvent = () => {
 		position: {
 			x: '0',
 			y: '0',
-			w: '1',
-			h: '1',
+			w: '',
+			h: '',
 		},
 	});
 
 	// Modal
 	const [openAddTypeModal, setOpenAddTypeModal] = useState(false);
+	const [openAddAreaModal, setOpenAddAreaModal] = useState(false);
 	const [openAllocationModal, setOpenAllocationModal] = useState(false);
+	const [openSeatAllocationModal, setOpenSeatAllocationModal] = useState(false);
 
 	// Fetch
 	const fetchEvent = async (eventId) => {
@@ -75,7 +99,6 @@ const EditEvent = () => {
 						event_name: result.event.event_name,
 						category: result.event.category._id,
 						occur_date: result.event.occur_date,
-						time: result.event.time,
 						location: result.event.location,
 						address: result.event.address,
 						introduce: result.event.introduce,
@@ -86,12 +109,12 @@ const EditEvent = () => {
 						end_time: result.event.end_time,
 					});
 				}
-				setIsLoadingEvent(false);
 			})
 			.catch((err) => {
 				toast.error(err.message);
 				console.log(err);
 			});
+		setIsLoadingEvent(false);
 	};
 	const fetchDataCategories = async () => {
 		setIsLoadingEvent(true);
@@ -103,11 +126,11 @@ const EditEvent = () => {
 				if (result.success) {
 					setCategories(result.categories);
 				}
-				setIsLoadingEvent(false);
 			})
 			.catch((err) => {
 				console.log(err);
 			});
+		setIsLoadingEvent(false);
 	};
 
 	const fetchArea = async (eventId) => {
@@ -115,9 +138,9 @@ const EditEvent = () => {
 		await axios
 			.get(`${process.env.REACT_APP_API_URL}/api/area/event/${eventId}`)
 			.then((response) => {
-				const result = response.areas;
+				const result = response.data;
 				if (result.success) {
-					setCategories(result.categories);
+					setAreas(result.areas);
 				}
 			})
 			.catch((err) => {
@@ -146,6 +169,7 @@ const EditEvent = () => {
 		await fetchDataCategories();
 		await fetchEvent(eventId);
 		await fetchTicketType(eventId);
+		await fetchArea(eventId);
 	};
 
 	useEffect(() => {
@@ -159,7 +183,6 @@ const EditEvent = () => {
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			params: {},
 			data: JSON.stringify(formData),
 		};
 
@@ -214,20 +237,63 @@ const EditEvent = () => {
 			});
 	};
 
+	const AddArea = async (areaForm) => {
+		const options = {
+			url: `${process.env.REACT_APP_API_URL}/api/area/create`,
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify(areaForm),
+		};
+
+		await axios
+			.request(options)
+			.then((response) => {
+				const result = response.data;
+				if (result.success) {
+					toast.success(result.msg);
+				}
+			})
+			.catch((err) => {
+				console.log(err);
+				toast.error(err.message);
+			})
+			.finally(() => {
+				setAreaForm({
+					event: eventId,
+					area_name: '',
+					is_static: false,
+					position: {
+						x: '0',
+						y: '0',
+						w: '',
+						h: '',
+					},
+				});
+			});
+	};
+
 	// Handle onClick
 
 	const handleSubmit = async () => {
-		UpdateEvent(eventId, formData);
-		await fetchDataCategories();
-		await fetchEvent(eventId);
+		await UpdateEvent(eventId, formData);
+		fetchEvent(eventId);
 	};
+
 	const handleAddTicketType = async () => {
-		console.log(ticketTypeForm);
 		await AddTicketType(ticketTypeForm);
 		await fetchTicketType(eventId);
 		setOpenAddTypeModal(false);
 	};
-	const handleUpdateTicketType = async (typeId, isSelling) => {
+
+	const handleAddArea = async () => {
+		await AddArea(areaForm);
+		await fetchArea(eventId);
+		setOpenAddAreaModal(false);
+	};
+
+	const handleUpdateTicketType = async (typeId, data) => {
 		setIsLoadingType(true);
 		const options = {
 			method: 'PUT',
@@ -235,7 +301,7 @@ const EditEvent = () => {
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			data: JSON.stringify({ is_selling: isSelling }),
+			data: JSON.stringify(data),
 		};
 		await axios
 			.request(options)
@@ -251,6 +317,32 @@ const EditEvent = () => {
 		await fetchTicketType(eventId);
 		setIsLoadingType(false);
 	};
+
+	const handleUpdateArea = async (areaId, data) => {
+		setIsLoadingArea(true);
+		const options = {
+			method: 'PUT',
+			url: `${process.env.REACT_APP_API_URL}/api/area/update/${areaId}`,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			data: JSON.stringify(data),
+		};
+		await axios
+			.request(options)
+			.then((response) => {
+				const result = response.data;
+				if (result.success) {
+					toast.success(result.msg);
+				}
+			})
+			.catch((err) => {
+				toast.error(err.message);
+			});
+		await fetchArea(eventId);
+		setIsLoadingArea(false);
+	};
+
 	const handleDeleteTicketType = async (typeId) => {
 		setIsLoadingType(true);
 		const options = {
@@ -270,6 +362,68 @@ const EditEvent = () => {
 			});
 		await fetchTicketType(eventId);
 		setIsLoadingType(false);
+	};
+
+	const handleDeleteArea = async (areaId) => {
+		setIsLoadingArea(true);
+		const options = {
+			method: 'DELETE',
+			url: `${process.env.REACT_APP_API_URL}/api/area/delete/${areaId}`,
+		};
+		await axios
+			.request(options)
+			.then((response) => {
+				const result = response.data;
+				if (result.success) {
+					toast.success(result.msg);
+				}
+			})
+			.catch((err) => {
+				toast.error(err.message);
+			});
+		await fetchArea(eventId);
+		setIsLoadingArea(false);
+	};
+
+	const onLayoutChange = (layout) => {
+		setLayout(layout);
+	};
+
+	const onLayoutTicketMapChange = (layout) => {
+		setTicketMap({ ...ticketMap, layout });
+	};
+
+	const handleSaveLayout = async () => {
+		let updatedTicketTypes = [];
+		let updatedAreas = [];
+
+		layout.map((item) => {
+			const type = item.i.split(' ')[0];
+			const id = item.i.split(' ')[1];
+			if (type === 'TicketType') {
+				updatedTicketTypes.push({ id: id, position: { x: item.x, y: item.y, w: item.w, h: item.h } });
+			} else {
+				updatedAreas.push({
+					id: id,
+					position: { x: item.x, y: item.y, w: item.w, h: item.h },
+					is_static: item.static,
+				});
+			}
+		});
+
+		for (const item of updatedTicketTypes) {
+			await handleUpdateTicketType(item.id, { position: item.position });
+		}
+		for (const item of updatedAreas) {
+			await handleUpdateArea(item.id, { position: item.position });
+		}
+
+		await fetchArea(eventId);
+		await fetchTicketType(eventId);
+	};
+
+	const handleSaveTicketMapLayout = async () => {
+		await handleUpdateTicketType(ticketMap.id, { ticket_map: ticketMap.layout });
 	};
 
 	return (
@@ -322,7 +476,7 @@ const EditEvent = () => {
 							<div className="w-full bg-gray-50 rounded border border-gray-200">
 								<div className="py-4 px-6 flex flex-row items-center justify-between">
 									<label className="text-sm font-medium text-black-500">Danh sách vé</label>
-									<Button onClick={() => setOpenAddTypeModal(true)} className="text-main">
+									<Button size="sm" onClick={() => setOpenAddTypeModal(true)} className="bg-main">
 										<HiPlus className="cursor-pointer text-white" />
 									</Button>
 								</div>
@@ -354,19 +508,25 @@ const EditEvent = () => {
 														<td>{item.n_stock}</td>
 														<td className="text-sm space-x-1">
 															{formData['is_seat_allocation'] && (
-																<HiPlus className="inline cursor-pointer text-main" />
+																<HiOutlineTemplate
+																	onClick={async () => {
+																		setTicketMap({ layout: item.ticket_map, id: item._id });
+																		setOpenSeatAllocationModal(true);
+																	}}
+																	className="inline cursor-pointer text-main"
+																/>
 															)}
 															{!item.is_selling ? (
 																<HiLockClosed
 																	onClick={async () => {
-																		await handleUpdateTicketType(item._id, true);
+																		await handleUpdateTicketType(item._id, { is_selling: true });
 																	}}
 																	className="inline cursor-pointer text-red-500"
 																/>
 															) : (
 																<HiLockOpen
 																	onClick={async () => {
-																		await handleUpdateTicketType(item._id, false);
+																		await handleUpdateTicketType(item._id, { is_selling: false });
 																	}}
 																	className="inline cursor-pointer text-main"
 																/>
@@ -388,6 +548,25 @@ const EditEvent = () => {
 									)}
 								</div>
 							</div>
+
+							<Modal size="7xl" show={openSeatAllocationModal} onClose={() => setOpenSeatAllocationModal(false)}>
+								<Modal.Header>Bố trí chỗ ngồi</Modal.Header>
+								<Modal.Body>
+									<SeatAllocationGrid
+										onLayoutTicketMapChange={onLayoutTicketMapChange}
+										ticketMap={ticketMap}
+									/>
+								</Modal.Body>
+								<Modal.Footer>
+									<Button onClick={handleSaveTicketMapLayout} className="bg-main">
+										Lưu
+									</Button>
+									<Button color="gray" onClick={() => setOpenSeatAllocationModal(false)}>
+										Hủy bỏ
+									</Button>
+								</Modal.Footer>
+							</Modal>
+
 							<Modal show={openAddTypeModal} onClose={() => setOpenAddTypeModal(false)}>
 								<Modal.Header>Thêm loại vé</Modal.Header>
 								<Modal.Body>
@@ -490,64 +669,178 @@ const EditEvent = () => {
 									</div>
 								</Modal.Body>
 								<Modal.Footer>
-									<Button onClick={() => handleAddTicketType()}>Thêm</Button>
+									<Button className="bg-main" onClick={() => handleAddTicketType()}>
+										Thêm
+									</Button>
 									<Button color="gray" onClick={() => setOpenAddTypeModal(false)}>
 										Hủy bỏ
 									</Button>
 								</Modal.Footer>
 							</Modal>
 
-							{/* Area */}
-							<div className="w-full bg-gray-50 rounded border border-gray-200 mt-10">
-								<div className="py-4 px-6 flex flex-row items-center justify-between">
-									<label className="text-sm font-medium text-black-500">Danh khu vực</label>
-								</div>
-								<div className="">
-									{isLoadingArea ? (
-										<div className="text-center">
-											<Spinner aria-label="Extra large spinner example" size="xl" />
-										</div>
-									) : (
-										<table className="text-xs leading-10 w-full bg-gray-100">
-											<thead>
-												<tr className="text-center text-black-500">
-													<th>Loại vé</th>
-													<th>Giá</th>
-													<th>Đã bán</th>
-													<th>Còn lại</th>
-													<th>
-														<div className="px-2"></div>
-													</th>
-												</tr>
-											</thead>
-
-											<tbody className="text-black-500 text-center">
-												{/* {ticketTypes.map((item,key) => (
-													<td key={key} className="text-sm space-x-1">{item.ticket_name}</td>
-												))} */}
-												<tr>
-													<td className="text-sm space-x-1">1</td>
-													<td className="text-sm space-x-1">1</td>
-													<td className="text-sm space-x-1">1</td>
-													<td className="text-sm space-x-1">1</td>
-												</tr>
-											</tbody>
-										</table>
-									)}
-								</div>
-							</div>
-
 							{formData['is_seat_allocation'] && (
 								<>
+									{/* Area */}
+									<div className="w-full bg-gray-50 rounded border border-gray-200 mt-10">
+										<div className="py-4 px-6 flex flex-row items-center justify-between">
+											<label className="text-sm font-medium text-black-500">Danh sách khu vực</label>
+											<Button size="sm" onClick={() => setOpenAddAreaModal(true)} className="bg-main">
+												<HiPlus className="cursor-pointer text-white" />
+											</Button>
+										</div>
+										<div className="">
+											{isLoadingArea ? (
+												<div className="text-center">
+													<Spinner aria-label="Extra large spinner example" size="xl" />
+												</div>
+											) : (
+												<table className="text-xs leading-10 w-full bg-gray-100">
+													<thead>
+														<tr className="text-center text-black-500">
+															<th>Tên khu vực</th>
+															<th>
+																<div className="px-2"></div>
+															</th>
+														</tr>
+													</thead>
+
+													<tbody className="text-black-500 text-center">
+														{areas.map((item, index) => (
+															<tr key={index}>
+																<td>{item.area_name}</td>
+																<td className="text-sm space-x-1">
+																	{item.is_static ? (
+																		<HiLockClosed
+																			onClick={() =>
+																				handleUpdateArea(item._id, { is_static: !item.is_static })
+																			}
+																			className="inline cursor-pointer text-red-500"
+																		/>
+																	) : (
+																		<HiLockOpen
+																			onClick={() =>
+																				handleUpdateArea(item._id, { is_static: !item.is_static })
+																			}
+																			className="inline cursor-pointer text-main"
+																		/>
+																	)}
+																	<HiTrash
+																		onClick={async () => {
+																			await handleDeleteArea(item._id);
+																		}}
+																		className="inline cursor-pointer text-red-500"
+																	/>
+																</td>
+															</tr>
+														))}
+													</tbody>
+												</table>
+											)}
+										</div>
+									</div>
 									<div className="mt-10 w-full">
-										<Button onClick={() => setOpenAllocationModal(true)} className="bg-main">
+										<Button
+											onClick={async () => {
+												await fetchArea(eventId);
+												setOpenAllocationModal(true);
+											}}
+											className="bg-main"
+										>
 											Bố trí
 										</Button>
 									</div>
-									<Modal show={openAllocationModal} onClose={() => setOpenAllocationModal(false)}>
+									<Modal size="7xl" show={openAllocationModal} onClose={() => setOpenAllocationModal(false)}>
 										<Modal.Header>Bố trí chỗ ngồi</Modal.Header>
-										<Modal.Body>Bố trí chỗ ngồi</Modal.Body>
-										<Modal.Footer>Bố trí chỗ ngồi</Modal.Footer>
+										<Modal.Body>
+											<TicketAllocationGrid
+												onLayoutChange={onLayoutChange}
+												ticketTypes={ticketTypes}
+												areas={areas}
+											/>
+										</Modal.Body>
+										<Modal.Footer>
+											<Button onClick={() => handleSaveLayout()} className="bg-main">
+												Lưu
+											</Button>
+											<Button color="gray" onClick={() => setOpenAllocationModal(false)}>
+												Hủy bỏ
+											</Button>
+										</Modal.Footer>
+									</Modal>
+
+									<Modal show={openAddAreaModal} onClose={() => setOpenAddAreaModal(false)}>
+										<Modal.Header>Thêm khu vực</Modal.Header>
+										<Modal.Body>
+											<div className="grid grid-cols-2 gap-4">
+												<div className="col-span-1">
+													<div className="max-w-md">
+														<div className="mb-2 block">
+															<Label htmlFor="area_name" value="Tên khu vực" />
+														</div>
+														<TextInput
+															onChange={(e) => setAreaForm({ ...areaForm, area_name: e.target.value })}
+															value={areaForm['area_name']}
+															id="area_name"
+															type="text"
+															placeholder="Tên khu vực"
+															required
+														/>
+													</div>
+												</div>
+												<div className="col-span-1">
+													<div className="grid grid-cols-2 gap-4">
+														<div className="col-span-1">
+															<div className="max-w-md">
+																<div className="mb-2 block">
+																	<Label htmlFor="area_width" value="Chiều rộng" />
+																</div>
+																<TextInput
+																	value={areaForm['position'].w}
+																	onChange={(e) =>
+																		setAreaForm({
+																			...areaForm,
+																			position: { ...areaForm.position, w: e.target.value },
+																		})
+																	}
+																	id="area_width"
+																	type="text"
+																	placeholder="Chiều rộng"
+																	required
+																/>
+															</div>
+														</div>
+														<div className="col-span-1">
+															<div className="max-w-md">
+																<div className="mb-2 block">
+																	<Label htmlFor="area_height" value="Chiều dài" />
+																</div>
+																<TextInput
+																	value={areaForm['position'].h}
+																	onChange={(e) =>
+																		setAreaForm({
+																			...areaForm,
+																			position: { ...areaForm.position, h: e.target.value },
+																		})
+																	}
+																	id="area_height"
+																	type="text"
+																	placeholder="Chiều dài"
+																	required
+																/>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</Modal.Body>
+										<Modal.Footer>
+											<Button className="bg-main" onClick={() => handleAddArea()}>
+												Thêm
+											</Button>
+											<Button color="gray" onClick={() => setOpenAddTypeModal(false)}>
+												Hủy bỏ
+											</Button>
+										</Modal.Footer>
 									</Modal>
 								</>
 							)}

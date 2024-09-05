@@ -1,7 +1,6 @@
 import { Label, TextInput, Select, ToggleSwitch } from 'flowbite-react';
 import UploadBox from '../Form/UploadBox';
 import Editor from '../Form/Editor';
-import { useState } from 'react';
 const EditEventForm = ({ data, categories, setData }) => {
 	return (
 		<>
