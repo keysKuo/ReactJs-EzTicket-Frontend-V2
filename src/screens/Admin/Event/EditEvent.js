@@ -20,6 +20,8 @@ import {
 import TicketAllocationGrid from '../../../components/Admin/TicketAllocationGrid';
 import SeatAllocationGrid from '../../../components/Admin/SeatAllocationGrid';
 const EditEvent = () => {
+	const navigate = useNavigate();
+
 	const { eventId } = useParams();
 
 	const [event, setEvent] = useState();
@@ -438,7 +440,7 @@ const EditEvent = () => {
 				<div className="pt-4 flex flex-row gap-3">
 					<button
 						onClick={() => {
-							setIsEditing(false);
+							navigate('/business/events');
 						}}
 						className="bg-gray-200 text-sm min-w-32 px-4 py-1"
 					>

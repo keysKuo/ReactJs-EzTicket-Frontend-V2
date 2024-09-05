@@ -143,9 +143,7 @@ export default function EventListTab({}) {
 																	title="Cập nhật sự kiện"
 																	size={20}
 																	onClick={() => {
-																		setIsEditing(true);
-																		setSelectedEvent(event._id);
-																		// handleOnEditEvent(event._id);
+																		handleOnEditEvent(event._id);
 																	}}
 																/>
 																<HiTrash title="Xóa sự kiện" size={20} />
