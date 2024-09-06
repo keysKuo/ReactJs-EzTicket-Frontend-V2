@@ -6,7 +6,7 @@ import AreaGraph from '../../components/Client/AreaGraph';
 import CustomerInfo from '../../components/Client/CustomerInfo';
 import { BiCreditCard, BiLogoPaypal, BiLogoAmazon } from 'react-icons/bi';
 import axios from 'axios';
-import { Toast, Spinner, Button, Modal, ListGroup } from 'flowbite-react';
+import { Toast, Spinner, Button, Modal, ListGroup, Card } from 'flowbite-react';
 import { HiExclamation } from 'react-icons/hi';
 import { checkAuth } from '../../utils';
 import SeatGrid from '../../components/Client/SeatGrid';
@@ -32,6 +32,10 @@ export default function BookingScreen() {
 		const userJson = localStorage.getItem('user');
 		return userJson ? JSON.parse(userJson) : null;
 	});
+
+	const [bookingTickets, setBookingTickets] = useState([]);
+
+	const [selectedTickets, setSelectedTickets] = useState([]);
 
 	const [paymentActive, setPaymentActive] = useState('stripe');
 	const [formData, setFormData] = useState({
@@ -139,8 +143,23 @@ export default function BookingScreen() {
 		createBooking();
 	};
 
-	const handleOnClickTicket = async (ticketMap) => {
-		setTicketMap(ticketMap);
+	const fetchSoldTicketByTicketTypeId = async (ticketTypeId) => {
+		const options = {
+			url: `${process.env.REACT_APP_API_URL}/api/booking/ticketType/${ticketTypeId}`,
+			method: 'GET',
+		};
+		await axios.request(options).then((response) => {
+			const result = response.data;
+
+			if (result.success) {
+				setBookingTickets(result.bookings);
+			}
+		});
+	};
+
+	const handleOnClickTicket = async (ticketMap, id, price, ticketName) => {
+		await fetchSoldTicketByTicketTypeId(id);
+		setTicketMap({ ticketMap, id, price, ticketName });
 		setOpenSeatModal(true);
 	};
 
@@ -196,10 +215,44 @@ export default function BookingScreen() {
 											<Modal size="7xl" show={openSeatModal} onClose={() => setOpenSeatModal(false)}>
 												<Modal.Header>Sơ đồ chỗ ngồi</Modal.Header>
 												<Modal.Body>
-													<SeatGrid ticketMap={ticketMap} />
+													<SeatGrid
+														selectedTickets={selectedTickets}
+														setSelectedTickets={setSelectedTickets}
+														ticketMaps={ticketMap}
+														setFormData={setFormData}
+														formData={formData}
+														bookingTickets={bookingTickets}
+													/>
+													<div className="flex">
+														<ListGroup className="w-48 mr-5">
+															<ListGroup.Item>
+																<span className="bg-main p-2"></span>
+																<p className="ml-2">Còn trống</p>
+															</ListGroup.Item>
+														</ListGroup>
+														<ListGroup className="w-48 mr-5">
+															<ListGroup.Item>
+																<span className="bg-blue-600 p-2"></span>
+																<p className="ml-2">Đã chọn</p>
+															</ListGroup.Item>
+														</ListGroup>
+														<ListGroup className="w-48 mr-5">
+															<ListGroup.Item>
+																<span className="bg-red-500 p-2"></span>
+																<p className="ml-2">Đã được mua</p>
+															</ListGroup.Item>
+														</ListGroup>
+														<ListGroup className="w-48 mr-5">
+															<ListGroup.Item>
+																<span className="bg-yellow-300 p-2"></span>
+																<p className="ml-2">Đang được mua</p>
+															</ListGroup.Item>
+														</ListGroup>
+													</div>
 												</Modal.Body>
+
 												<Modal.Footer>
-													<Button color="gray" onClick={() => setOpenModal(false)}>
+													<Button color="gray" onClick={() => setOpenSeatModal(false)}>
 														Đóng
 													</Button>
 												</Modal.Footer>
@@ -289,7 +342,8 @@ export default function BookingScreen() {
 															<tbody>
 																<tr className="table-row">
 																	<td className="text-sm font-base p-1">
-																		{tp.ticket_name} <br /> {tp.price.toLocaleString('vi-vn')}đ
+																		{tp.ticket_name} {event.is_seat_allocation && tp.name} <br />{' '}
+																		{tp.price.toLocaleString('vi-vn')}đ
 																	</td>
 																	<td className="text-sm text-right">
 																		{tp.qty} <br /> {(tp.price * tp.qty).toLocaleString('vi-vn')}đ

@@ -100,7 +100,9 @@ const TicketList = ({ qty, ticket_types, data, setData, is_seat_allocation, hand
 										{is_seat_allocation && (
 											<td className="py-2 w-24 text-xs text-right mr-5">
 												<Button
-													onClick={() => handleOnclick(type.ticket_map)}
+													onClick={() =>
+														handleOnclick(type.ticket_map, type._id, type.price, type.ticket_name)
+													}
 													className="bg-main"
 													size={'xs'}
 												>
