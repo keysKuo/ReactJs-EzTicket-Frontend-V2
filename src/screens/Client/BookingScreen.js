@@ -164,6 +164,12 @@ export default function BookingScreen() {
 		setOpenSeatModal(true);
 	};
 
+	const groupByTicketTypes = (items) => {
+		const grouped = items.reduces((acc,item) => {
+			const group = acc.find((group) => group.ticket_types.ticket_name)
+		}, [])
+	}
+
 	return (
 		<>
 			{event && (

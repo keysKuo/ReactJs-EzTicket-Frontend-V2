@@ -298,7 +298,7 @@ export default function MyTicketScreen() {
 																		{booking.tickets.map((ticket, idx) => {
 																			return (
 																				<p className="my-2" key={idx}>
-																					{ticket.ticket_type.ticket_name}
+																					{ticket.ticket_type.ticket_name} {ticket.name || ''}
 																				</p>
 																			);
 																		})}
