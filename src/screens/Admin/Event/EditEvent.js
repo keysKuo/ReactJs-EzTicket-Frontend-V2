@@ -608,7 +608,7 @@ const EditEvent = () => {
 										<div className="col-span-1">
 											<div className="max-w-md">
 												<div className="mb-2 block">
-													<Label htmlFor="ticket_type_num" value="số lương" />
+													<Label htmlFor="ticket_type_num" value="Số lượng chỗ ngồi" />
 												</div>
 												<TextInput
 													onChange={(e) =>
@@ -617,7 +617,7 @@ const EditEvent = () => {
 													value={ticketTypeForm['n_stock']}
 													id="ticket_type_num"
 													type="text"
-													placeholder="số lương"
+													// placeholder="100"
 													required
 												/>
 											</div>
@@ -628,7 +628,7 @@ const EditEvent = () => {
 													<div className="col-span-1">
 														<div className="max-w-md">
 															<div className="mb-2 block">
-																<Label htmlFor="ticket_type_width" value="Chiều rộng" />
+																<Label htmlFor="ticket_type_width" value="Số cột" />
 															</div>
 															<TextInput
 																value={ticketTypeForm['position'].w}
@@ -640,7 +640,7 @@ const EditEvent = () => {
 																}
 																id="ticket_type_width"
 																type="text"
-																placeholder="Chiều rộng"
+																// placeholder="Số cột"
 																required
 															/>
 														</div>
@@ -648,7 +648,7 @@ const EditEvent = () => {
 													<div className="col-span-1">
 														<div className="max-w-md">
 															<div className="mb-2 block">
-																<Label htmlFor="ticket_type_height" value="Chiều dài" />
+																<Label htmlFor="ticket_type_height" value="Số hàng" />
 															</div>
 															<TextInput
 																value={ticketTypeForm['position'].h}
@@ -660,7 +660,7 @@ const EditEvent = () => {
 																}
 																id="ticket_type_height"
 																type="text"
-																placeholder="Chiều dài"
+																// placeholder="Số hàng "
 																required
 															/>
 														</div>

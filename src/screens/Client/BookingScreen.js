@@ -7,7 +7,7 @@ import CustomerInfo from '../../components/Client/CustomerInfo';
 import { BiCreditCard, BiLogoPaypal, BiLogoAmazon } from 'react-icons/bi';
 import axios from 'axios';
 import { Toast, Spinner, Button, Modal, ListGroup, Card } from 'flowbite-react';
-import { HiExclamation } from 'react-icons/hi';
+import { HiExclamation, HiTicket } from 'react-icons/hi';
 import { checkAuth } from '../../utils';
 import SeatGrid from '../../components/Client/SeatGrid';
 
@@ -28,6 +28,7 @@ export default function BookingScreen() {
 	const [openModal, setOpenModal] = useState(false);
 	const [openSeatModal, setOpenSeatModal] = useState(false);
 	const [ticketMap, setTicketMap] = useState([]);
+	const [groupTickets, setGroupTickets] = useState([]);
 	const [user, setUser] = useState(() => {
 		const userJson = localStorage.getItem('user');
 		return userJson ? JSON.parse(userJson) : null;
@@ -157,9 +158,9 @@ export default function BookingScreen() {
 		});
 	};
 
-	const handleOnClickTicket = async (ticketMap, id, price, ticketName) => {
+	const handleOnClickTicket = async (ticketMap, id, price, ticketName, position) => {
 		await fetchSoldTicketByTicketTypeId(id);
-		setTicketMap({ ticketMap, id, price, ticketName });
+		setTicketMap({ ticketMap, id, price, ticketName, h: position.h, w: position.w });
 		setOpenSeatModal(true);
 	};
 
@@ -222,6 +223,7 @@ export default function BookingScreen() {
 														setFormData={setFormData}
 														formData={formData}
 														bookingTickets={bookingTickets}
+														setGroupTickets={setGroupTickets}
 													/>
 													<div className="flex">
 														<ListGroup className="w-48 mr-5">
@@ -336,23 +338,56 @@ export default function BookingScreen() {
 											<>-</>
 										) : (
 											<>
-												{formData.items.map((tp, index) => {
-													return (
-														<table aria-hidden="true" key={index} className="table w-[100%]">
-															<tbody>
-																<tr className="table-row">
-																	<td className="text-sm font-base p-1">
-																		{tp.ticket_name} {event.is_seat_allocation && tp.name} <br />{' '}
-																		{tp.price.toLocaleString('vi-vn')}đ
-																	</td>
-																	<td className="text-sm text-right">
-																		{tp.qty} <br /> {(tp.price * tp.qty).toLocaleString('vi-vn')}đ
-																	</td>
-																</tr>
-															</tbody>
-														</table>
-													);
-												})}
+												{!event.is_seat_allocation &&
+													formData.items.map((tp, index) => {
+														return (
+															<table aria-hidden="true" key={index} className="table w-[100%]">
+																<tbody>
+																	<tr className="table-row">
+																		<td className="text-sm font-base p-1">
+																			{tp.ticket_name} {event.is_seat_allocation && tp.name} <br />{' '}
+																			{tp.price.toLocaleString('vi-vn')}đ
+																		</td>
+																		<td className="text-sm text-right">
+																			{tp.qty} <br /> {(tp.price * tp.qty).toLocaleString('vi-vn')}đ
+																		</td>
+																	</tr>
+																</tbody>
+															</table>
+														);
+													})}
+
+												{event.is_seat_allocation &&
+													groupTickets.map((group, index) => {
+														console.log(group);
+														return (
+															<table aria-hidden="true" key={index} className="table w-[100%]">
+																<tbody>
+																	<tr className="table-row">
+																		<td className="text-sm font-base p-1">
+																			{group.ticket_name}{' '}
+																			{group.items.map((item, index) => (
+																				<span
+																					className="px-1.5 bg-white m-0.5 text-black-500"
+																					key={index}
+																				>
+																					{item.name}
+																				</span>
+																			))}
+																			<br /> {group.items[0].price.toLocaleString('vi-vn')}đ
+																		</td>
+																		<td className="text-sm text-right p-2">
+																			{group.items.length} <br />{' '}
+																			{(group.items[0].price * group.items.length).toLocaleString(
+																				'vi-vn',
+																			)}
+																			đ
+																		</td>
+																	</tr>
+																</tbody>
+															</table>
+														);
+													})}
 											</>
 										)}
 									</div>

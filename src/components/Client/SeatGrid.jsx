@@ -3,26 +3,35 @@ import GridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
-const SeatGrid = ({ ticketMaps, selectedTickets, setSelectedTickets, setFormData, formData, bookingTickets }) => {
-	const { ticketMap, id, price, ticketName } = ticketMaps;
+const SeatGrid = ({
+	ticketMaps,
+	selectedTickets,
+	setSelectedTickets,
+	setFormData,
+	formData,
+	bookingTickets,
+	setGroupTickets,
+}) => {
+	const { ticketMap, id, price, ticketName, w, h } = ticketMaps;
 	let layout = [];
 	const [pendingTickets, setPendingTickets] = useState([]);
 	const [completedTickets, setCompletedTickets] = useState([]);
 
 	const handleOnClick = (ticket) => {
-		setSelectedTickets((prev) => [
-			...prev,
-			{
-				_id: id,
-				qty: 1,
-				price,
-				ticket_name: ticketName,
-				name: ticket.i,
-				x: ticket.x,
-				y: ticket.y,
-				ticketId: ticket._id,
-			},
-		]);
+		if (!selectedTickets.some((i) => i.ticketId == ticket._id))
+			setSelectedTickets((prev) => [
+				...prev,
+				{
+					_id: id,
+					qty: 1,
+					price,
+					ticket_name: ticketName,
+					name: ticket.i,
+					x: ticket.x,
+					y: ticket.y,
+					ticketId: ticket._id,
+				},
+			]);
 	};
 
 	const handleDoubleClick = (ticket) => {
@@ -36,6 +45,8 @@ const SeatGrid = ({ ticketMaps, selectedTickets, setSelectedTickets, setFormData
 			items: selectedTickets,
 			temporary_cost: listPrice.reduce((total, price) => total + price, 0),
 		});
+		const group = groupByTicketTypes(selectedTickets);
+		setGroupTickets(group);
 	}, [selectedTickets]);
 
 	useEffect(() => {
@@ -57,17 +68,18 @@ const SeatGrid = ({ ticketMaps, selectedTickets, setSelectedTickets, setFormData
 			layout.push({
 				...item,
 				static: true,
-				isCompleted: completedTickets.some((i) => i.x == item.x && i.y == item.y),
-				isPending: pendingTickets.some((i) => i.x == item.x && i.y == item.y),
 			});
 			return (
 				<button
-					disabled={completedTickets.some((i) => i.x == item.x && i.y == item.y)}
+					disabled={
+						completedTickets.some((i) => i.x == item.x && i.y == item.y) ||
+						pendingTickets.some((i) => i.x == item.x && i.y == item.y)
+					}
 					onClick={() => {
 						handleOnClick(item);
 					}}
 					onDoubleClick={() => handleDoubleClick(item)}
-					className={`text-white ${
+					className={`text-white rounded-md ${
 						selectedTickets.some((i) => i.ticketId.includes(item._id))
 							? 'bg-blue-600'
 							: completedTickets.some((i) => i.x == item.x && i.y == item.y)
@@ -78,14 +90,35 @@ const SeatGrid = ({ ticketMaps, selectedTickets, setSelectedTickets, setFormData
 					} cursor-pointe text-center`}
 					key={item.i}
 				>
+					<strong>{ticketName}</strong>
+					<br />
 					{item.i}
 				</button>
 			);
 		});
 	};
 
+	const groupByTicketTypes = (items) => {
+		const grouped = items.reduce((acc, item) => {
+			// Find the group object for the current item's ticket_name
+			const group = acc.find((group) => group.ticket_name === item.ticket_name);
+
+			if (group) {
+				// If the group exists, push the item into its items array
+				group.items.push(item);
+			} else {
+				// If the group doesn't exist, create a new group for this ticket_name
+				acc.push({ ticket_name: item.ticket_name, items: [item] });
+			}
+
+			return acc;
+		}, []);
+
+		return grouped;
+	};
+
 	return (
-		<GridLayout className="" layout={layout} cols={ticketMap.length / 10} rowHeight={20} width={1200}>
+		<GridLayout className="" layout={layout} cols={w} rowHeight={50} width={1200}>
 			{generateDom(ticketMap)}
 		</GridLayout>
 	);
